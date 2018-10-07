@@ -1,8 +1,8 @@
-package ru.shemplo.dsau.stuctures;
+package ru.shemplo.snowball.stuctures;
 
 import java.util.Objects;
 
-import ru.shemplo.dsau.utils.MurmurHash;
+import ru.shemplo.snowball.utils.MurmurHash;
 
 public class Pair <F, S> {
     

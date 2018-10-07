@@ -5,4 +5,4 @@
  * @author Shemplo
  *
  */
-package ru.shemplo.dsau.utils.time;
+package ru.shemplo.snowball.utils;

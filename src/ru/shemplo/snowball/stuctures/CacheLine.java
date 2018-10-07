@@ -1,4 +1,4 @@
-package ru.shemplo.dsau.stuctures;
+package ru.shemplo.snowball.stuctures;
 
 import java.util.Comparator;
 import java.util.Objects;

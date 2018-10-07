@@ -1,4 +1,4 @@
-package ru.shemplo.dsau.utils.db;
+package ru.shemplo.snowball.utils.db;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package ru.shemplo.dsau.utils.db;
+package ru.shemplo.snowball.utils.db;
 
 public enum DBType {
 

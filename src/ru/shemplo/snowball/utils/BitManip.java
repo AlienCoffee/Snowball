@@ -1,4 +1,4 @@
-package ru.shemplo.dsau.utils;
+package ru.shemplo.snowball.utils;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

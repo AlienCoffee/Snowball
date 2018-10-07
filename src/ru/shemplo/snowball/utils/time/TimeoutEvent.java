@@ -1,4 +1,4 @@
-package ru.shemplo.dsau.utils.time;
+package ru.shemplo.snowball.utils.time;
 
 import java.util.concurrent.atomic.AtomicLong;
 

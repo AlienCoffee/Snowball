@@ -1,8 +1,8 @@
-package ru.shemplo.dsau.utils.time;
+package ru.shemplo.snowball.utils.time;
 
 import java.util.Date;
 
-import ru.shemplo.dsau.stuctures.Pair;
+import ru.shemplo.snowball.stuctures.Pair;
 
 public class TimeDelta {
 
