@@ -2,7 +2,7 @@
  * 
  */
 /**
- * @author Shemp
+ * @author Shemplo
  *
  */
 package ru.shemplo.dsau.utils.time;
