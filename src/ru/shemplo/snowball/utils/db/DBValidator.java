@@ -21,4 +21,17 @@ public class DBValidator {
 		}
 	}
 	
+	public static void testFunctionArguments (DBFunction function, String ... args) {
+		if (function.ARGN == -1 && args.length == 0) {
+			String text = "Function " + function + " expects at least one argument";
+			throw new IllegalStateException (text);
+		}
+		
+		if (function.ARGN != -1 && args.length != function.ARGN) {
+			String text = "Function " + function + " expects " + function.ARGN 
+									  + " arguments (" + args.length + " given)";
+			throw new IllegalStateException (text);
+		}
+	}
+	
 }
