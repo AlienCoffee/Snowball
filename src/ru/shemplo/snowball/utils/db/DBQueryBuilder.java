@@ -68,6 +68,7 @@ public abstract class DBQueryBuilder {
 	
 	public static class SelectFieldBuilder <Owner extends DBQueryBuilder> extends DBQueryBuilder {
 
+		private String query = "", as = "";
 		private final Owner OWNER;
 		
 		public SelectFieldBuilder (Owner owner) {
@@ -84,14 +85,31 @@ public abstract class DBQueryBuilder {
 		}
 		
 		public SelectFieldBuilder <Owner> function (String function, String ... args) {
+			StringJoiner joiner = new StringJoiner (", ");
+			if (args != null) {
+				Arrays.asList (args).forEach (joiner::add);
+			}
+			
+			StringBuilder sb = new StringBuilder (function);
+			sb.append ("(").append (joiner.toString ()).append (")");
+			this.query = sb.toString ();
+			
 			return this;
 		}
 		
 		public SelectFieldBuilder <Owner> expression (String expression) {
+			this.query = expression;
+			
 			return this;
 		}
 		
 		public SelectFieldBuilder <Owner> as (String label) {
+			this.as += "AS " + label;
+			return this;
+		}
+		
+		public SelectFieldBuilder <Owner> all () {
+			this.query = "*";
 			return this;
 		}
 		
@@ -101,7 +119,7 @@ public abstract class DBQueryBuilder {
 		
 		@Override
 		public DBQuery asQuery () {
-			return null;
+			return new DBQuery (query + " " + as);
 		}
 		
 	}
@@ -147,8 +165,6 @@ public abstract class DBQueryBuilder {
 		
 		public CreateTableBuilder table (String name) { return new CreateTableBuilder (name); }
 		public CreateTableBuilder table (           ) { return new CreateTableBuilder ("");   }
-		
-		
 		
 	}
 	
@@ -344,7 +360,11 @@ public abstract class DBQueryBuilder {
 		}
 		
 		public SelectFieldBuilder <SelectBuilder> select () {
-			return new SelectFieldBuilder <> (this);
+			SelectFieldBuilder <SelectBuilder> 
+				builder = new SelectFieldBuilder <> (this);
+			
+			SELECT.add (builder);
+			return builder;
 		}
 		
 		public SelectIntoBuilder <SelectBuilder> into () {
@@ -386,6 +406,10 @@ public abstract class DBQueryBuilder {
 			if (filter != null) {
 				sb.append (filter.name () + " ");
 			}
+			
+			StringJoiner joiner = new StringJoiner (", ");
+			SELECT.forEach (f -> joiner.add (f.asQuery ().toString ()));
+			sb.append (joiner.toString ()).append (" ");
 			
 			return new DBQuery (sb.toString ());
 		}
