@@ -19,6 +19,13 @@ public abstract class DBQueryBuilder {
 	
 	//-------------------------------//
 	
+	/* 
+	 * ╔════════════════════════════╗
+	 * ║ CREATE COLUMN BUILDER PART ║
+	 * ╚════════════════════════════╝
+	 * 
+	 */
+	
 	public static class ColumnBuilder <Owner extends DBQueryBuilder> extends DBQueryBuilder {
 		
 		private final Owner OWNER;
@@ -66,8 +73,16 @@ public abstract class DBQueryBuilder {
 		
 	}
 	
+	/* 
+	 * ╔═══════════════════════════╗
+	 * ║ SELECT FIELD BUILDER PART ║
+	 * ╚═══════════════════════════╝
+	 * 
+	 */
+	
 	public static class SelectFieldBuilder <Owner extends DBQueryBuilder> extends DBQueryBuilder {
 
+		private String query = "", as = "";
 		private final Owner OWNER;
 		
 		public SelectFieldBuilder (Owner owner) {
@@ -75,6 +90,8 @@ public abstract class DBQueryBuilder {
 		}
 		
 		public SelectFieldBuilder <Owner> column (String name) {
+			this.query = "`" + name + "`";
+			
 			return this;
 		}
 		
@@ -84,14 +101,31 @@ public abstract class DBQueryBuilder {
 		}
 		
 		public SelectFieldBuilder <Owner> function (String function, String ... args) {
+			StringJoiner joiner = new StringJoiner (", ");
+			if (args != null) {
+				Arrays.asList (args).forEach (joiner::add);
+			}
+			
+			StringBuilder sb = new StringBuilder (function);
+			sb.append ("(").append (joiner.toString ()).append (")");
+			this.query = sb.toString ();
+			
 			return this;
 		}
 		
 		public SelectFieldBuilder <Owner> expression (String expression) {
+			this.query = expression;
+			
 			return this;
 		}
 		
 		public SelectFieldBuilder <Owner> as (String label) {
+			this.as += "AS '" + label + "'";
+			return this;
+		}
+		
+		public SelectFieldBuilder <Owner> all () {
+			this.query = "*";
 			return this;
 		}
 		
@@ -101,17 +135,51 @@ public abstract class DBQueryBuilder {
 		
 		@Override
 		public DBQuery asQuery () {
-			return null;
+			if ("*".equals (query.trim ())) {
+				String text = "Select `*` can't be used with AS";
+				throw new IllegalStateException (text);
+			}
+			
+			DBValidator.testName (as, this);
+			return new DBQuery (query + " " + as);
 		}
 		
 	}
 	
+	/* 
+	 * ╔══════════════════════════╗
+	 * ║ SELECT INTO BUILDER PART ║
+	 * ╚══════════════════════════╝
+	 * 
+	 */
+	
 	public static class SelectIntoBuilder <Owner extends DBQueryBuilder> extends DBQueryBuilder {
 
+		private boolean useOutfile = true;
+		private String filename = "";
+		
 		private final Owner OWNER;
 		
 		public SelectIntoBuilder (Owner owner) {
 			this.OWNER = owner;
+		}
+		
+		public SelectIntoBuilder <Owner> outfile () {
+			this.useOutfile = true;
+			
+			return this;
+		}
+		
+		public SelectIntoBuilder <Owner> dumpfile () {
+			this.useOutfile = false;
+			
+			return this;
+		}
+		
+		public SelectIntoBuilder <Owner> file (String filename) {
+			this.filename = filename;
+			
+			return this;
 		}
 		
 		public Owner done () {
@@ -120,7 +188,67 @@ public abstract class DBQueryBuilder {
 		
 		@Override
 		public DBQuery asQuery () {
-			return null;
+			DBValidator.testName (filename, this);
+			
+			StringBuilder sb = new StringBuilder ("INTO ");
+			if (useOutfile) {
+				sb.append ("OUTFILE ");
+			} else {
+				sb.append ("DUMPFILE ");
+			}
+			
+			sb.append ("'").append (filename).append ("'");
+			return new DBQuery (sb.toString ());
+		}
+		
+	}
+	
+	/* 
+	 * ╔════════════════════╗
+	 * ║ WHERE BUILDER PART ║
+	 * ╚════════════════════╝
+	 * 
+	 */
+	
+	public static class WhereBuilder <Owner extends DBQueryBuilder> extends DBQueryBuilder {
+
+		private final List <String> EXPRS = new ArrayList <> ();
+		private final Owner OWNER;
+		
+		public WhereBuilder (Owner owner, String expression) {
+			this.EXPRS.add ("(" + expression + ")");
+			this.OWNER = owner;
+		}
+		
+		public WhereBuilder <Owner> and (String ... ors) {
+			if (ors == null || ors.length == 0) {
+				return this;
+			}
+			
+			StringJoiner joiner = new StringJoiner (" OR ");
+			Arrays.asList (ors).forEach (joiner::add);
+			
+			EXPRS.add ("(" + joiner.toString () + ")");
+			return this;
+		}
+		
+		public Owner done () {
+			return OWNER;
+		}
+		
+		@Override
+		public DBQuery asQuery () {
+			for (String expression : EXPRS) {
+				DBValidator.testName (expression, this);
+			}
+			
+			StringBuilder sb = new StringBuilder ("WHERE ");
+			
+			StringJoiner joiner = new StringJoiner (" AND ");
+			EXPRS.forEach (joiner::add);
+			
+			sb.append (joiner);
+			return new DBQuery (sb.toString ());
 		}
 		
 	}
@@ -147,8 +275,6 @@ public abstract class DBQueryBuilder {
 		
 		public CreateTableBuilder table (String name) { return new CreateTableBuilder (name); }
 		public CreateTableBuilder table (           ) { return new CreateTableBuilder ("");   }
-		
-		
 		
 	}
 	
@@ -295,7 +421,16 @@ public abstract class DBQueryBuilder {
 						isSqlBigResult = false, isSqlBufferResult = false,
 						isCachePolicy  = false, useCache          = false,
 						calcFoundRows  = false, isHighPriority    = false;
+		private SelectIntoBuilder <SelectBuilder> into = null;
+		private WhereBuilder <SelectBuilder> where = null;
 		private DBFilter filter = null;
+		private String table = "";
+		
+		private enum LimType {
+			NONE, SINGLE, DOUBLE;
+		}
+		private LimType limitType = LimType.NONE;
+		private int limA = 0, limB = 0;
 		
 		private List <SelectFieldBuilder <SelectBuilder>> 
 			SELECT = new ArrayList <> ();
@@ -344,19 +479,50 @@ public abstract class DBQueryBuilder {
 		}
 		
 		public SelectFieldBuilder <SelectBuilder> select () {
-			return new SelectFieldBuilder <> (this);
+			SelectFieldBuilder <SelectBuilder> 
+				builder = new SelectFieldBuilder <> (this);
+			
+			SELECT.add (builder);
+			return builder;
 		}
 		
 		public SelectIntoBuilder <SelectBuilder> into () {
-			return new SelectIntoBuilder <> (this);
+			this.into = new SelectIntoBuilder <> (this);
+			
+			return into;
 		}
 		
-		public SelectBuilder from () {
+		public SelectBuilder from (String table) {
+			this.table = "`" + table + "`";
+			
+			return this;
+		}
+		
+		public WhereBuilder <SelectBuilder> where (String expression) {
+			this.where = new WhereBuilder <> (this, expression);
+			
+			return where;
+		}
+		
+		public SelectBuilder limit (int limit) {
+			this.limitType = LimType.SINGLE;
+			this.limA = limit;
+			
+			return this;
+		}
+		
+		public SelectBuilder limit (int limit, int offset) {
+			this.limitType = LimType.DOUBLE;
+			this.limB = offset;
+			this.limA = limit;
+			
 			return this;
 		}
 		
 		@Override
 		public DBQuery asQuery () {
+			DBValidator.testName (table, this);
+			
 			StringBuilder sb = new StringBuilder ("SELECT ");
 			if (isStraightJoin) {
 				sb.append ("STRAIGHT_JOIN ");
@@ -385,6 +551,28 @@ public abstract class DBQueryBuilder {
 			}
 			if (filter != null) {
 				sb.append (filter.name () + " ");
+			}
+			
+			StringJoiner joiner = new StringJoiner (", ");
+			SELECT.forEach (f -> joiner.add (f.asQuery ().toString ()));
+			sb.append (joiner.toString ()).append (" ");
+			
+			if (into != null) {
+				sb.append (into.asQuery ().toString ()).append (" ");
+			}
+			
+			sb.append ("FROM ").append (table);
+			
+			if (where != null) {
+				sb.append (" ").append (where.asQuery ().toString ());
+			}
+			
+			if (!LimType.NONE.equals (limitType)) {
+				sb.append (" LIMIT ").append (limA);
+				
+				if (LimType.DOUBLE.equals (limitType)) {
+					sb.append (", ").append (limB);
+				}
 			}
 			
 			return new DBQuery (sb.toString ());
