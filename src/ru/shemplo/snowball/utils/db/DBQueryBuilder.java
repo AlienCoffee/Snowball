@@ -9,7 +9,36 @@ import java.util.StringJoiner;
 
 import ru.shemplo.snowball.stuctures.Pair;
 
+@Deprecated
 public abstract class DBQueryBuilder {
+	
+	/*
+	 * create ().table ("products").columns (
+	 *   column ("id", INT.len (11)).flags (AI | NN),
+	 *   column ("name", TEXT).flags (NN),
+	 *   column ("price", INT).flags (NN).default ("0")
+	 * ).keys (
+	 *   key (PRIMARY, "id")
+	 * ).ifNotExists ().collate ("utf8_unicode_ci").engine (InnoDB)
+	 * 
+	 * 
+	 * 
+	 * select ().fields (
+	 *   fnc (COUNT, val ("*")).as ("size"),
+	 *   fld ("id"),
+	 *   val ("some value")
+	 *   // all ()
+	 * ).from ("products").where (
+	 *   eq (fnc (MOD, fld ("price"), 10), val ("0")), // and
+	 *   more (fld ("id"), val ("0")), // and
+	 *   or (eq (val ("1"), val ("2")), more (val ("1"), val ("2")))
+	 * ).limit (1, 4)
+	 * 
+	 */
+	
+	
+	
+	
 	
 	private DBQueryBuilder () {}
 	
@@ -23,14 +52,14 @@ public abstract class DBQueryBuilder {
 	 * ╔════════════════════════════╗
 	 * ║ CREATE COLUMN BUILDER PART ║
 	 * ╚════════════════════════════╝
-	 * 
 	 */
 	
 	public static class ColumnBuilder <Owner extends DBQueryBuilder> extends DBQueryBuilder {
 		
 		private final Owner OWNER;
 		
-		private boolean isNotNull = false;
+		private boolean isNotNull = false, 
+						autoIncrement = false;
 		private DBPrimitive type;
 		private String name;
 		
@@ -54,6 +83,11 @@ public abstract class DBQueryBuilder {
 			return this;
 		}
 		
+		public ColumnBuilder <Owner> ai () {
+			this.autoIncrement = true;
+			return this;
+		}
+		
 		public Owner add () {
 			return OWNER;
 		}
@@ -64,6 +98,9 @@ public abstract class DBQueryBuilder {
 			
 			StringBuilder sb = new StringBuilder ();
 			sb.append ("'").append (name).append ("' ").append (type);
+			if (autoIncrement) {
+				sb.append (" AUTOINCREMENT");
+			}
 			if (isNotNull) {
 				sb.append (" NOT NULL");
 			}
@@ -91,7 +128,6 @@ public abstract class DBQueryBuilder {
 		
 		public SelectFieldBuilder <Owner> column (String name) {
 			this.query = "`" + name + "`";
-			
 			return this;
 		}
 		
@@ -115,7 +151,6 @@ public abstract class DBQueryBuilder {
 		
 		public SelectFieldBuilder <Owner> expression (String expression) {
 			this.query = expression;
-			
 			return this;
 		}
 		
@@ -166,19 +201,16 @@ public abstract class DBQueryBuilder {
 		
 		public SelectIntoBuilder <Owner> outfile () {
 			this.useOutfile = true;
-			
 			return this;
 		}
 		
 		public SelectIntoBuilder <Owner> dumpfile () {
 			this.useOutfile = false;
-			
 			return this;
 		}
 		
 		public SelectIntoBuilder <Owner> file (String filename) {
 			this.filename = filename;
-			
 			return this;
 		}
 		
@@ -488,26 +520,22 @@ public abstract class DBQueryBuilder {
 		
 		public SelectIntoBuilder <SelectBuilder> into () {
 			this.into = new SelectIntoBuilder <> (this);
-			
 			return into;
 		}
 		
 		public SelectBuilder from (String table) {
 			this.table = "`" + table + "`";
-			
 			return this;
 		}
 		
 		public WhereBuilder <SelectBuilder> where (String expression) {
 			this.where = new WhereBuilder <> (this, expression);
-			
 			return where;
 		}
 		
 		public SelectBuilder limit (int limit) {
 			this.limitType = LimType.SINGLE;
 			this.limA = limit;
-			
 			return this;
 		}
 		

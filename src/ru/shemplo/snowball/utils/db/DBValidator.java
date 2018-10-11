@@ -5,11 +5,12 @@ import java.util.List;
 import ru.shemplo.snowball.utils.db.DBQueryBuilder.ColumnBuilder;
 import ru.shemplo.snowball.utils.db.DBQueryBuilder.CreateTableBuilder;
 
+@SuppressWarnings ("deprecation")
 public class DBValidator {
 
 	public static void testName (String name, DBQueryBuilder owner) {
 		if (name == null || name.length () == 0) {
-			String text = "Name of " + owner.getClass ().getSimpleName () + " is NULL or empty";
+			String text = "Name of " + owner + " is NULL or empty";
 			throw new IllegalStateException (text);
 		}
 	}

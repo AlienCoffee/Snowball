@@ -9,7 +9,12 @@ public enum DBFunction {
 	 * 
 	 */
 	
-	CONCAT (-1), COUNT (1), MAX (-1), MIN (-1), MOD (2);
+	CONCAT (-1), 
+	COUNT  ( 1), 
+	NOT    ( 1), 
+	MAX    (-1), 
+	MIN    (-1), 
+	MOD    ( 2);
 	
 	public final int ARGN;
 	
