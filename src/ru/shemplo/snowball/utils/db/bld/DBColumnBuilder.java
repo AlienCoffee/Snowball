@@ -77,6 +77,10 @@ public class DBColumnBuilder implements DBUnit {
 		return this;
 	}
 	
+	public DBColumnBuilder refs () {
+		return this;
+	}
+	
 	public DBColumnBuilder as (String label) {
 		if (label == null || label.length () == 0) {
 			String text = "AS label can't have EMPTY value";
