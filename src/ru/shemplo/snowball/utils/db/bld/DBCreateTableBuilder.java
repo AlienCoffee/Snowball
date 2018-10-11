@@ -85,7 +85,7 @@ public class DBCreateTableBuilder {
 		return this;
 	}
 	
-	public DBCreateTableBuilder keys () {
+	public DBCreateTableBuilder keys (DBKeyBuilder ... keys) {
 		return this;
 	}
 	
