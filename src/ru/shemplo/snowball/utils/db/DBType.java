@@ -2,7 +2,8 @@ package ru.shemplo.snowball.utils.db;
 
 public enum DBType {
 
-	SQLite ("sqlite")
+	SQLite ("sqlite"),
+	MySQL  ("mysql")
 	;
 	
 	public final String TYPE;
