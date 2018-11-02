@@ -1,12 +1,16 @@
 package ru.shemplo.snowball.utils;
 
+import static java.nio.ByteBuffer.*;
+
 public class ByteManip {
 
     public static byte [] L2B (long value) {
-        return convert (value, 8);
+        //return allocate (8).putLong (value).array ();
+        return convert (value, 8); // faster than ^^^^
     }
     
     public static byte [] I2B (int value) {
+        allocate (0);
         return convert (value, 4);
     }
     
