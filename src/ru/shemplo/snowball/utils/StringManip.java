@@ -1,7 +1,12 @@
 package ru.shemplo.snowball.utils;
 
+import static ru.shemplo.snowball.utils.fun.StreamUtils.*;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 
 public class StringManip {
 
@@ -26,6 +31,14 @@ public class StringManip {
         }
         
         return sb.toString ();
+    }
+    
+    public static List <String> splitOnTokens (String input) {
+        StringTokenizer st = new StringTokenizer (input);
+        List <String> tokens = whilst (s -> s.hasMoreTokens (), 
+                                       s -> s.nextToken (), st)
+                             . collect (Collectors.toList ());
+        return tokens;
     }
     
 }
