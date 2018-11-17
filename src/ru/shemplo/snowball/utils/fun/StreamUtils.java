@@ -14,7 +14,8 @@ import java.util.stream.StreamSupport;
 
 public interface StreamUtils {
     
-    public static <I, O> Stream <O> whilst (Predicate <I> condition, Function <I, O> step, I obj) {
+    public static <I, O> Stream <O> whilst (Predicate <I> condition, 
+            Function <I, O> step, I obj) {
         Stream.Builder <O> builder = Stream.builder ();
         while (condition.test (obj)) {
             O tmp = step.apply (obj);
@@ -24,7 +25,8 @@ public interface StreamUtils {
         return builder.build ();
     }
     
-    public static <I1, I2, O> Stream <O> zip (Stream <I1> left, Stream <I2> right, BiFunction <I1, I2, O> zipper) {
+    public static <I1, I2, O> Stream <O> zip (Stream <I1> left, Stream <I2> right, 
+            BiFunction <I1, I2, O> zipper) {
         Objects.requireNonNull (zipper);
         Spliterator <? extends I1> aSpliterator = Objects.requireNonNull (left ).spliterator ();
         Spliterator <? extends I2> bSpliterator = Objects.requireNonNull (right).spliterator ();
@@ -32,12 +34,12 @@ public interface StreamUtils {
         // Zipping looses DISTINCT and SORTED characteristics
         int characteristics = aSpliterator.characteristics () 
                             & bSpliterator.characteristics () 
-                            & ~ (DISTINCT | SORTED);
+                            & ~(DISTINCT | SORTED);
         
         long zipSize = ((characteristics & SIZED) != 0)
-                ? Math.min (aSpliterator.getExactSizeIfKnown (), 
-                            bSpliterator.getExactSizeIfKnown ())
-                : -1;
+                    ? Math.min (aSpliterator.getExactSizeIfKnown (), 
+                                bSpliterator.getExactSizeIfKnown ())
+                    : -1;
         
         Iterator <I1> aIterator = Spliterators.iterator (aSpliterator);
         Iterator <I2> bIterator = Spliterators.iterator (bSpliterator);
