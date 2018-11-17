@@ -1,5 +1,6 @@
 package ru.shemplo.snowball.stuctures;
 
+import java.util.Map.Entry;
 import java.util.Objects;
 
 import ru.shemplo.snowball.utils.MurmurHash;
@@ -48,6 +49,10 @@ public class Pair <F, S> {
     
     public static <F, S> Pair <F, S> mp (F F, S S) {
         return new Pair <> (F, S);
+    }
+    
+    public static <F, S> Pair <F, S> fromMapEntry (Entry <F, S> entry) {
+        return mp (entry.getKey (), entry.getValue ());
     }
     
 }

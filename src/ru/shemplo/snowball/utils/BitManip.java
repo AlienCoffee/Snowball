@@ -24,4 +24,8 @@ public class BitManip {
         return (number << offset) >>> (index + offset);
     }
     
+    public static int fillLast (int number, int value) {
+        return ((value & 0b1) << number) - 1;
+    }
+    
 }
