@@ -90,8 +90,7 @@ public class TimeDelta {
 	}
 	
 	public long get (TDUnit unit) {
-		TDUnit [] values = TDUnit.values ();
-		boolean isLast = values.length - 1 == unit.ordinal ();
+		boolean isLast = TDUnit.values ().length - 1 == unit.ordinal ();
 		return floorTo (unit) % (isLast ? Long.MAX_VALUE : unit.CAPACITY);
 	}
 	
