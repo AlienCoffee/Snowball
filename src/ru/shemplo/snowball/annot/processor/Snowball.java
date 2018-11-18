@@ -88,7 +88,6 @@ public abstract class Snowball {
               .collect (Collectors.toList ())
     );
     
-    //private static final Set <Package> TRACKING_PACKAGES = new HashSet <> ();
     private static final Map <Class <?>, Pair <Integer, Instance <?>>> 
         CONTEXT = new HashMap <> ();
     
@@ -98,7 +97,6 @@ public abstract class Snowball {
             throw new IllegalStateException (message);
         }
         
-        //TRACKING_PACKAGES.clear (); 
         CONTEXT.clear ();
         
         Snowball snowballInstance = createMainInstance (getInitClassName ());
@@ -130,7 +128,7 @@ public abstract class Snowball {
         STORAGE.getFields ().forEach (f -> {
             f.setAccessible (true);
             
-            final Class <?> token  = f.getType (), 
+            final Class <?> token       = f.getType (), 
                             parentToken = f.getDeclaringClass ();
             final Instance <?> parent = STORAGE.getInstance (parentToken);
             if (parent == null) {
@@ -186,7 +184,7 @@ public abstract class Snowball {
             Class <?> token = Class.forName (initClassName, false, cl);
             if (Snowball.class.isAssignableFrom (token)) {
                 @SuppressWarnings ("unchecked")
-                Class<? extends Snowball> snowballToken = (Class <? extends Snowball>) token;
+                Class <? extends Snowball> snowballToken = (Class <? extends Snowball>) token;
                 return snowballToken.getConstructor ().newInstance ();
             } else {
                 String message = String.format ("Type `%s` is not instacne of Snowball", token);
