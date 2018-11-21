@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+
 public class StringManip {
 
     private static final Map <Character, String> 
@@ -35,10 +38,24 @@ public class StringManip {
     
     public static List <String> splitOnTokens (String input) {
         StringTokenizer st = new StringTokenizer (input);
-        List <String> tokens = whilst (s -> s.hasMoreTokens (), 
-                                       s -> s.nextToken (), st)
+        List <String> tokens = whilst (StringTokenizer::hasMoreTokens, 
+                                       StringTokenizer::nextToken, st)
                              . collect (Collectors.toList ());
         return tokens;
+    }
+    
+    public static String fetchNonEmptyLine (BufferedReader br) throws IOException {
+        String line = null;
+        while ((line = br.readLine ()) != null) {
+            if (line.length () == 0) { continue; }
+            return line;
+        }
+        
+        return null;
+    }
+    
+    public static int compare (String a, String b) {
+        throw new UnsupportedOperationException ();
     }
     
 }
