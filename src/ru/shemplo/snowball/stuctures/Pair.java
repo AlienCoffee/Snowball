@@ -35,6 +35,9 @@ public class Pair <F, S> {
             && (S == null ? pair.S == null : S.equals (pair.S));
     }
     
+    public F getF () { return F; }
+    public S getS () { return S; }
+    
     @Override
     public int hashCode () {
     	return new MurmurHash ()
@@ -45,6 +48,13 @@ public class Pair <F, S> {
     
     public Pair <S, F> swap () {
     	return Pair.mp (S, F);
+    }
+    
+    public boolean same () {
+        @SuppressWarnings ("unlikely-arg-type")
+        boolean result = Objects.equals (F, S);
+        
+        return result;
     }
     
     public static <F, S> Pair <F, S> mp (F F, S S) {
