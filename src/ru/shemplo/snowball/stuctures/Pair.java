@@ -2,6 +2,7 @@ package ru.shemplo.snowball.stuctures;
 
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.function.Function;
 
 import ru.shemplo.snowball.utils.MurmurHash;
 
@@ -37,6 +38,14 @@ public class Pair <F, S> {
     
     public F getF () { return F; }
     public S getS () { return S; }
+    
+    public <R> Pair <R, S> applyF (Function <F, R> converter) {
+        return mp (converter.apply (getF ()), getS ());
+    }
+    
+    public <R> Pair <F, R> applyS (Function <S, R> converter) {
+        return mp (getF (), converter.apply (S));
+    }
     
     @Override
     public int hashCode () {

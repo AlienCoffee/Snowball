@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import ru.shemplo.snowball.annot.Cooler;
 import ru.shemplo.snowball.annot.Init;
+import ru.shemplo.snowball.annot.Polar;
 import ru.shemplo.snowball.annot.Snowflake;
 import ru.shemplo.snowball.stuctures.Instance;
 import ru.shemplo.snowball.stuctures.Pair;
@@ -37,6 +38,12 @@ public abstract class Snowball {
         
         SNOWFLAKE (Snowflake.class, i -> { STORAGE.addSnowflake ((Type) i); }),
         COOLER    (Cooler.class,    i -> { STORAGE.addCooler ((Method) i);  }),
+        POLAR     (Polar.class,     i -> {
+            Polar polar = ((Class <?>) i).getAnnotation (Polar.class);
+            Arrays.stream (polar.scan ())
+                  .map (Class::getPackage).map (Arrays::asList)
+                  .forEach (Snowball::runGrowthOfShapeTo);
+        }),
         INIT      (Init.class,      i -> {
             final Field field = (Field) i;
             STORAGE.addField (field);
@@ -152,7 +159,8 @@ public abstract class Snowball {
         });
         
         isSnowballMade = true;
-        snowballInstance.onShaped ();
+        try   { snowballInstance.onShaped (); } 
+        catch (Exception e) { e.printStackTrace (); }
     }
 
     private static final String getInitClassName () {
@@ -215,6 +223,15 @@ public abstract class Snowball {
         entries.forEach (handler::accept);
     }
     
-    protected void onShaped () {}
+    @SuppressWarnings ("unchecked")
+    public static <R> R getSnowflakeFor (Class <?> token) {
+        return (R) STORAGE.getInstance (token).get ();
+    }
+    
+    public static void runOnInited (Runnable runnable) {
+        throw new UnsupportedOperationException ();
+    }
+    
+    protected void onShaped () throws Exception {}
     
 }
