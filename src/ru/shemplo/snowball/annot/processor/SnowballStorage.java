@@ -106,4 +106,15 @@ public final class SnowballStorage {
         return SNOWFLAKES;
     }
     
+    private final List <Runnable> DELAYED_TASKS = new ArrayList <> ();
+    
+    public void addDelayerTask (Runnable delayedTask) {
+        if (delayedTask == null) { return; }
+        DELAYED_TASKS.add (delayedTask);
+    }
+    
+    public List <Runnable> getDelayedTasks () {
+        return DELAYED_TASKS;
+    }
+    
 }

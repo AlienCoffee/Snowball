@@ -158,6 +158,8 @@ public abstract class Snowball {
             }
         });
         
+        STORAGE.getDelayedTasks ().forEach (Runnable::run);
+        
         isSnowballMade = true;
         try   { snowballInstance.onShaped (); } 
         catch (Exception e) { e.printStackTrace (); }
@@ -229,7 +231,7 @@ public abstract class Snowball {
     }
     
     public static void runOnInited (Runnable runnable) {
-        throw new UnsupportedOperationException ();
+        STORAGE.addDelayerTask (runnable);
     }
     
     protected void onShaped () throws Exception {}
