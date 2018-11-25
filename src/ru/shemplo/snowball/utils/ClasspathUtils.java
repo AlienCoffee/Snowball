@@ -108,6 +108,11 @@ public class ClasspathUtils {
         return entries;
     }
     
+    public static final Map <Class <? extends Annotation>, List <Object>> findAllAnnotations (
+            final Package searchPackage, final Set <Class <? extends Annotation>> interesting) {
+        return findAllAnnotations (Arrays.asList (searchPackage), interesting);
+    }
+    
     public static final List <Class <?>> getAllSupers (final Class <?> token) {
         final List <Class <?>> supers = new ArrayList <> ();
         
