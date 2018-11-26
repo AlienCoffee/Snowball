@@ -39,6 +39,7 @@ public final class SnowballStorage {
         COOLERS = new HashMap<> ();
     
     public final void addCooler (Method method) {
+        //System.out.println ("Cooler found: " + method.getName ());
         int mods = method.getModifiers ();
         if (!isStatic (mods) || isPrivate (mods)) {
             System.out.println ("Ignore cooler: " + method.getName ());
@@ -86,6 +87,7 @@ public final class SnowballStorage {
         REQUIRED_FIELDS = new ArrayList <> ();
     
     public final void addField (Field field) {
+        //System.out.println ("Field found: " + field.getName ());
         Objects.requireNonNull (field);
         REQUIRED_FIELDS.add (field);
     }
@@ -98,6 +100,7 @@ public final class SnowballStorage {
         SNOWFLAKES = new ArrayList <> ();
     
     public final void addSnowflake (Type snowflake) {
+        //System.out.println ("Snowflake found: " + snowflake.getTypeName ());
         Objects.requireNonNull (snowflake);
         SNOWFLAKES.add (snowflake);
     }

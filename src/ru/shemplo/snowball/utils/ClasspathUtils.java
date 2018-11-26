@@ -1,32 +1,35 @@
 package ru.shemplo.snowball.utils;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
-
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import javax.tools.JavaCompiler;
-import javax.tools.JavaFileManager;
-import javax.tools.JavaFileManager.Location;
-import javax.tools.JavaFileObject;
-import javax.tools.JavaFileObject.Kind;
-import javax.tools.StandardLocation;
-import javax.tools.ToolProvider;
+import ru.shemplo.snowball.stuctures.Pair;
+import ru.shemplo.snowball.utils.fun.StreamUtils;
 
 public class ClasspathUtils {
     
     /**
      * ...
-     * 
-     * @require JDK (not JRE)
      * 
      * @param pkg
      * 
@@ -34,34 +37,102 @@ public class ClasspathUtils {
      * 
      */
     public static final List <Class <?>> getClassesFromPackage (Package pkg) throws IOException {
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler ();
-        if (compiler == null) {
-            String message = "This method requires to be runned under JDK";
-            throw new IllegalStateException (message);
-        }
+        final ClassLoader classLoader = Thread.currentThread ().getContextClassLoader ();
+        final String path = pkg.getName ().replace (".", "/");
         
-        JavaFileManager manager = compiler.getStandardFileManager (null, null, null);
-        final Location location = StandardLocation.CLASS_PATH;
-        String packageName = pkg.getName ();
+        return Stream.concat (
+                StreamUtils.whilst (Enumeration::hasMoreElements, Enumeration::nextElement, 
+                                       classLoader.getResources (path))
+                . map     (URL::getFile)
+                . map     (ClasspathUtils::decodeUnchecked)
+                . map     (File::new)
+                . filter  (Objects::nonNull)
+                . filter  (File::exists)
+                . map     (File::listFiles)
+                . flatMap (Stream::of)
+                . filter  (File::isFile)
+                . filter  (f -> f.getName ().endsWith (".class"))
+                . map     (File::getName)
+                . map     (n -> n.substring (0, n.length () - ".class".length ()))
+                . filter  (n -> !"package-info".equals (n))
+                . map     (n -> pkg.getName ().concat (".").concat (n))
+                . map     (n -> getClassForNameUnchecked (n, classLoader))
+                . filter  (Objects::nonNull)
+                , 
+                getClassesFromJAR (pkg)
+                . filter (Objects::nonNull)
+             )
+             . distinct ()
+             . collect (Collectors.toList ());
+    }
+    
+    private static final String decodeUnchecked (String url) {
+        try   { return URLDecoder.decode (url, "UTF-8"); } 
+        catch (UnsupportedEncodingException uee) {/*impossible*/}
         
-        ClassLoader cl = Thread.currentThread ().getContextClassLoader ();
-        Set <Kind> kinds = new HashSet <> (); kinds.add (Kind.CLASS);
-        Iterable <JavaFileObject> objects = manager.list (location, 
-                                        packageName, kinds, false);
-        List <Class <?>> classes = new ArrayList <> ();
-        for (JavaFileObject object : objects) {
-            if (!object.getName ().endsWith (".class")) { continue; }
-            
-            String absoluteClassName = object.toUri ().toString ().replace ('/', '.');
-            int relativeIndex = absoluteClassName.indexOf (packageName);
-            String className = absoluteClassName.substring (relativeIndex, 
-                        absoluteClassName.length () - ".class".length ());
-            try {
-                classes.add (Class.forName (className, false, cl));
-            } catch (ClassNotFoundException cnfe) {}
-        }
+        return null;
+    }
+    
+    private static final Class <?> getClassForNameUnchecked (
+            String name, ClassLoader classLoader) {
+        try   { return Class.forName (name, false, classLoader); } 
+        catch (ClassNotFoundException cnfe) {}
         
-        return classes;
+        return null;
+    }
+    
+    private static final Stream <Class <?>> getClassesFromJAR (Package pkg) {
+        final ClassLoader classLoader = Thread.currentThread  ()
+                                      . getContextClassLoader ();
+        final URLClassLoader urlClassLoader 
+            = new URLClassLoader (getJarURLs (), classLoader);
+        final String packageName = pkg.getName ();
+        
+        return Arrays.stream (urlClassLoader.getURLs ())
+             . map     (URL::getPath)
+             . map     (ClasspathUtils::decodeUnchecked)
+             . map     (ClasspathUtils::makeJarFileUnchecked)
+             . filter  (Objects::nonNull)
+             . map     (JarFile::entries)
+             . flatMap (en -> StreamUtils.whilst (Enumeration::hasMoreElements, 
+                                                  Enumeration::nextElement, en))
+             . map     (JarEntry::getName)
+             . filter  (n -> n.endsWith (".class"))
+             . map     (n -> n.substring (0, n.length () - ".class".length ()))
+             . map     (n -> n.replace ("/", "."))
+             . map     (n -> Pair.mp (n.lastIndexOf ("."), n))
+             . filter  (p -> p.F > -1)
+             . map     (p -> Pair.mp (p.S.substring (0, p.F), p.S.substring (p.F + 1)))
+             . filter  (p -> packageName.equals (p.F))
+             . map     (p -> String.format ("%s.%s", p.F, p.S))
+             . map     (n -> getClassForNameUnchecked (n, urlClassLoader));
+    }
+    
+    private static final URL [] getJarURLs () {
+        final String classpath = System.getProperty ("java.class.path");
+        return Stream.of (classpath.split (";"))
+             . filter   (path -> path.endsWith (".jar"))
+             . map      (File::new)
+             . map      (File::toURI)
+             . map      (ClasspathUtils::getURLUnhecked)
+             . filter   (Objects::nonNull)
+             . distinct ()
+             . collect  (Collectors.toList ())
+             . toArray  (new URL [0]);
+    }
+    
+    private static final JarFile makeJarFileUnchecked (String file) {
+        try   { return new JarFile (file); } 
+        catch (IOException io) {}
+        
+        return null;
+    }
+    
+    private static final URL getURLUnhecked (URI uri) {
+        try   { return uri.toURL (); } 
+        catch (MalformedURLException murle) {}
+        
+        return null;
     }
     
     public static final Set <Package> getPackagesInTree (Package root) {
