@@ -14,7 +14,7 @@ import java.util.stream.StreamSupport;
 
 public interface StreamUtils {
     
-    public static <I, O> Stream <O> whilst (Predicate <I> condition, 
+    static <I, O> Stream <O> whilst (Predicate <I> condition, 
             Function <I, O> step, I obj) {
         Stream.Builder <O> builder = Stream.builder ();
         while (condition.test (obj)) {
@@ -25,7 +25,24 @@ public interface StreamUtils {
         return builder.build ();
     }
     
-    public static <I1, I2, O> Stream <O> zip (Stream <I1> left, Stream <I2> right, 
+    static <I, O> Stream <O> dowhilst (Predicate <O> condition,
+            Function <I, O> step, I obj) {
+        Stream.Builder <O> builder = Stream.builder ();
+        O tmp = null;
+        do { 
+            if (tmp != null) { builder.add (tmp); }
+            tmp = step.apply (obj); 
+        } while (tmp != null && condition.test (tmp));
+        
+        return builder.build ();
+    }
+    
+    static <I extends Iterable <O>, O> Stream <O> takeIf (Predicate <O> condition,
+            Function <I, O> step, I obj) {
+        throw new UnsupportedOperationException ();
+    }
+    
+    static <I1, I2, O> Stream <O> zip (Stream <I1> left, Stream <I2> right, 
             BiFunction <I1, I2, O> zipper) {
         Objects.requireNonNull (zipper);
         Spliterator <? extends I1> aSpliterator = Objects.requireNonNull (left ).spliterator ();
