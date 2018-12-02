@@ -2,6 +2,7 @@ package ru.shemplo.snowball.utils;
 
 import static java.lang.Math.*;
 import java.awt.Color;
+import java.util.Random;
 
 public class ColorManip {
 
@@ -25,6 +26,20 @@ public class ColorManip {
         }
         
         return new Color (stops [0], stops [1], stops [2]);
+    }
+    
+    private static final Random RANDOM = new Random ();
+    
+    public static final javafx.scene.paint.Color getRandomColor (int from, int to) {
+        return javafx.scene.paint.Color.rgb (
+                from + RANDOM.nextInt (to - from), 
+                from + RANDOM.nextInt (to - from), 
+                from + RANDOM.nextInt (to - from)
+             );
+    }
+    
+    public static final javafx.scene.paint.Color getRandomColor () {
+        return getRandomColor (0, 256);
     }
     
 }
