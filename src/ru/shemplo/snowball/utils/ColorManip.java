@@ -1,6 +1,7 @@
 package ru.shemplo.snowball.utils;
 
 import static java.lang.Math.*;
+
 import java.awt.Color;
 import java.util.Random;
 

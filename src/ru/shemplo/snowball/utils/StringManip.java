@@ -2,14 +2,13 @@ package ru.shemplo.snowball.utils;
 
 import static ru.shemplo.snowball.utils.fun.StreamUtils.*;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
-
-import java.io.BufferedReader;
-import java.io.IOException;
 
 public class StringManip {
 
