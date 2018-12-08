@@ -1,0 +1,104 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  <groupId>ru.shemplo</groupId>
+  <artifactId>snowball</artifactId>
+  <packaging>jar</packaging>
+  <version>0.0.1</version>
+  
+  <name>Snowball</name>
+  
+  <developers>
+  	<developer>
+  	  <name>Plotnikov Andrey</name>
+  	  <email>shemplo@outliik.com</email>
+  	  <url>https://shemplo.ru</url>
+  	</developer>
+  </developers>
+  
+  <licenses>
+  	<license>
+  	  <name>Apache-2.0</name>
+  	  <url>https://opensource.org/licenses/Apache-2.0</url>
+  	  <distribution>repo</distribution>
+  	</license>
+  </licenses>
+  
+  <scm>
+  	<url>https://github.com/AlienCoffee/Snowball</url>
+  	<connection>scm:git@github.com:AlienCoffee/Snowball.git</connection>
+  	<developerConnection>scm:git@github.com:AlienCoffee/Snowball.git</developerConnection>
+  </scm>
+  
+  <properties>
+  	<maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    
+    <junit.jupiter.version> 5.2.0</junit.jupiter.version>
+    <junit.platform.version>1.2.0</junit.platform.version>
+  
+    <java.version>1.8</java.version>
+    
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.report.outputEncoding>UTF-8</project.report.outputEncoding>
+  </properties>
+  
+  <profiles>
+  	<profile>
+  	  <id>release</id>
+  	  <distributionManagement>
+  	    <repository>
+  	      <id>ossrh</id>
+  	      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+  	    </repository>
+  	  </distributionManagement>
+  	  
+  	  <build>
+  	  	<plugins>
+  	  	  <plugin>
+  	  	    <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.0.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+  	  	  </plugin>
+  	  	  <plugin>
+	        <groupId>org.apache.maven.plugins</groupId>
+	        <artifactId>maven-javadoc-plugin</artifactId>
+	        <version>3.0.0</version>
+	        <executions>
+	          <execution>
+	            <id>attach-javadocs</id>
+	            <goals>
+	              <goal>jar</goal>
+	            </goals>
+	          </execution>
+	        </executions>
+	      </plugin>
+	      
+	      <plugin>
+		    <groupId>org.apache.maven.plugins</groupId>
+		    <artifactId>maven-gpg-plugin</artifactId>
+		    <version>1.5</version>
+		    <executions>
+		      <execution>
+		        <id>sign-artifacts</id>
+    		      <phase>verify</phase>
+  		        <goals>
+		          <goal>sign</goal>
+		        </goals>
+		      </execution>
+		    </executions>
+		  </plugin>
+  	  	</plugins>
+  	  </build>
+  	</profile>
+  </profiles>
+</project>

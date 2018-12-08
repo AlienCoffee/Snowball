@@ -8,9 +8,9 @@ import java.lang.annotation.Target;
 
 
 @Retention (RUNTIME)
-@Target (METHOD)
-public @interface Cooler {
+@Target (TYPE)
+public @interface Snowflake {
     
-    int priority () default 0;
+    boolean refresh () default false;
     
 }
