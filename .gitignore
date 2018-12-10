@@ -2,6 +2,7 @@
 /bin/
 /target
 .settings
+/.mvn
 
 .classpath
 .project

@@ -8,6 +8,8 @@
   <version>0.0.1</version>
   
   <name>Snowball</name>
+  <description>Simple DI framework</description>
+  <url>https://github.com/AlienCoffee/Snowball</url>
   
   <developers>
   	<developer>
@@ -49,7 +51,7 @@
   	  <id>release</id>
   	  <distributionManagement>
   	    <repository>
-  	      <id>ossrh</id>
+  	      <id>ru.shemplo</id>
   	      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
   	    </repository>
   	  </distributionManagement>
