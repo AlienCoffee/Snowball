@@ -98,7 +98,7 @@ public class ClasspathUtils {
     
     private static final URL [] getJarURLs () {
         final String classpath = System.getProperty ("java.class.path");
-        return Stream.of (classpath.split (";"))
+        return Stream.of (classpath.split (File.pathSeparator))
              . filter   (path -> path.endsWith (".jar"))
              . map      (File::new)
              . map      (File::toURI)

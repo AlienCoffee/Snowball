@@ -5,7 +5,7 @@
   <groupId>ru.shemplo</groupId>
   <artifactId>snowball</artifactId>
   <packaging>jar</packaging>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   
   <name>Snowball</name>
   <description>Simple DI framework</description>
@@ -14,7 +14,7 @@
   <developers>
   	<developer>
   	  <name>Plotnikov Andrey</name>
-  	  <email>shemplo@outliik.com</email>
+  	  <email>shemplo@outlook.com</email>
   	  <url>https://shemplo.ru</url>
   	</developer>
   </developers>
