@@ -43,6 +43,7 @@ public class ClasspathUtils {
                 . map     (File::getName)
                 . map     (n -> n.substring (0, n.length () - ".class".length ()))
                 . filter  (n -> !"package-info".equals (n))
+                . sorted  ()
                 . map     (n -> pkg.getName ().concat (".").concat (n))
                 . map     (n -> getClassForNameUnchecked (n, classLoader))
                 . filter  (Objects::nonNull)
@@ -87,6 +88,8 @@ public class ClasspathUtils {
              . map     (JarEntry::getName)
              . filter  (n -> n.endsWith (".class"))
              . map     (n -> n.substring (0, n.length () - ".class".length ()))
+             . filter  (n -> !n.endsWith ("package-info"))
+             . sorted  ()
              . map     (n -> n.replace ("/", "."))
              . map     (n -> Pair.mp (n.lastIndexOf ("."), n))
              . filter  (p -> p.F > -1)
@@ -127,6 +130,7 @@ public class ClasspathUtils {
         final String packageName = root.getName ();
         return Arrays.stream  (Package.getPackages ())
              . filter  (p -> p.getName ().startsWith (packageName))
+             . filter  (p -> !root.equals (p))
              . collect (Collectors.toSet ());
     }
     
