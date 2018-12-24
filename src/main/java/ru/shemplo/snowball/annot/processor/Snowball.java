@@ -2,21 +2,20 @@ package ru.shemplo.snowball.annot.processor;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Objects;
 
-import ru.shemplo.snowball.annot.Cooler;
-import ru.shemplo.snowball.annot.Init;
-import ru.shemplo.snowball.annot.Polar;
 import ru.shemplo.snowball.annot.Snowflake;
+import ru.shemplo.snowball.annot.Wind;
 import ru.shemplo.snowball.utils.ClasspathUtils;
 
 public abstract class Snowball {
     
     protected static final String CLASS_NAME  = Snowball.class.getName (),
                                   METHOD_NAME = "shape";
-    private static final SnowballContext CONTEXT = new SnowballContext ();
+    protected static final SnowballContext CONTEXT = new SnowballContext ();
     private static boolean isSnowballShaped = false;
     
     protected static final synchronized void shape (String ... args) {
@@ -29,19 +28,30 @@ public abstract class Snowball {
         isSnowballShaped = true;
     }
     
+    protected static final synchronized void shape (Snowball instance, String ... args) {
+        
+    }
+    
     protected static void runWalkFrom (Package pkg) {
+        System.out.println (String.format ("Start walk from %s", pkg));
+        CONTEXT.addProjectPackage (pkg);
+        
         while (true) {
             boolean someTasksDone = false;
             while (!CONTEXT.unexploredClasses.isEmpty ()) {                
                 Class <?> token = CONTEXT.unexploredClasses.poll ();
                 CONTEXT.addProjectPackage (token.getPackage ());
+                System.out.println (String.format ("%10s %s", "class", 
+                                    token.getName ()));
                 processClass (token);
                 someTasksDone = true;
             }
             
             while (!CONTEXT.unexploredPackages.isEmpty ()) {
+                System.out.println (String.format ("%10s %s", "package", 
+                        CONTEXT.unexploredPackages.peek ().getName ()));
                 processPackage (CONTEXT.unexploredPackages.poll ());
-                someTasksDone = true;                
+                someTasksDone = true;
             }
             
             if (!someTasksDone) { break; }
@@ -78,18 +88,39 @@ public abstract class Snowball {
     }
     
     private static void processClass (Class <?> token) {
-        if (token.isAnnotationPresent (Polar.class)) {
-            Class <?> [] polars = token.getAnnotation (Polar.class)
-                                . scan ();
-            Arrays.asList (polars).stream ()
-            . map     (Class::getPackage)
+        if (token.isAnnotationPresent (Wind.class)) {
+            Class <?> [] polars = token.getAnnotation (Wind.class).blow ();
+            Arrays.asList (polars).stream ().map (Class::getPackage)
             . forEach (CONTEXT::addProjectPackage);
         }
+        
+        Class <?> container = token.getDeclaringClass ();
+        if (token.isMemberClass () 
+                && (!CONTEXT.registeredClasses.contains (container) 
+                    || !Modifier.isStatic (token.getModifiers ()))) {
+            System.out.println (String.format ("%10s %s", "", "unregistered"));
+            CONTEXT.registeredClasses.remove (token);
+            CONTEXT.unexploredClasses.remove (token);
+            return;
+        }
+        
+        if (token.isAnnotationPresent (Snowflake.class)) {
+            CONTEXT.registeredSnowflakes.put (token, 
+                  new SnowflakeInitializer (token));
+        }
+        
+        Arrays.asList (token.getDeclaredFields ())
+        . forEach (Snowball::processField);
+        
+        Arrays.asList (token.getDeclaredMethods ())
+        . forEach (Snowball::processMethod);
+        
+        /*
         
         if (token.isAnnotationPresent (Snowflake.class)) {
             long registered = Arrays.asList (token.getDeclaredFields ()).stream ()
                             . filter (f -> !Modifier.isFinal (f.getModifiers ()))
-                            . filter (f -> f.isAnnotationPresent (Init.class))
+                            . filter (f -> f.isAnnotationPresent (Polar.class))
                             . map    (Field::getType)
                             . peek   (CONTEXT::addProjectClass)
                             . count  ();
@@ -102,6 +133,25 @@ public abstract class Snowball {
         . filter  (m -> Modifier.isPublic (m.getModifiers ()))
         . filter  (m -> m.isAnnotationPresent (Cooler.class))
         . forEach (CONTEXT.coolers::add);
+        */
+    }
+    
+    private static void processField (final Field field) {
+        if (!Modifier.isPublic (field.getModifiers ())) { return; }
+        if (!Modifier.isStatic (field.getModifiers ())) { return; }
+        if (!Modifier.isFinal  (field.getModifiers ())) { return; }
+        
+        CONTEXT.registeredSnowflakes.put (field.getDeclaringClass (), 
+                                   new SnowflakeInitializer (field));
+    }
+    
+    private static void processMethod (Method method) {
+        if (!Modifier.isPublic (method.getModifiers ())) { return; }
+        if (!Modifier.isStatic (method.getModifiers ())) { return; }
+        if (!Modifier.isFinal  (method.getModifiers ())) { return; }
+        
+        CONTEXT.registeredSnowflakes.put (method.getDeclaringClass (), 
+                                   new SnowflakeInitializer (method));
     }
     
     private static void processPackage (Package pkg) {

@@ -7,12 +7,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 
+@Target (TYPE)
 @Retention (RUNTIME)
-@Target (METHOD)
-public @interface Cooler {
+public @interface Wind {
     
-    String scope () default "";
-    
-    int priority () default 0;
+    Class <?> [] blow ();
     
 }

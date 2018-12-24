@@ -1,10 +1,6 @@
 package ru.shemplo.snowball.annot.processor;
 
-import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 public final class SnowballContext {
     
@@ -28,15 +24,13 @@ public final class SnowballContext {
         = new HashSet <> ();
     
     void addProjectPackage (Package pkg) {
-        if (registeredPackages.contains (pkg)) {
+        if (!registeredPackages.contains (pkg)) {
             registeredPackages.add (pkg);
             unexploredPackages.add (pkg);
         }
     }
     
-    final Set <Class <?>> needInjection
-        = new HashSet <> ();
-    final Set <Method> coolers
-        = new HashSet <> ();
+    public final Map <Class <?>, SnowflakeInitializer> registeredSnowflakes
+        = new HashMap <> ();
      
 }
