@@ -10,20 +10,23 @@ import java.util.stream.Stream;
 public final class SnowflakeInitializer {
     
     private final Class <?> TOKEN;
+    private final Method METHOD;
+    private final Field FIELD;
     
     public SnowflakeInitializer (Class <?> token) {
-        this.TOKEN = token;
+        this.TOKEN = token; this.FIELD = null;
+        this.METHOD = null;
     }
     
     public SnowflakeInitializer (Field field) {
-        this.TOKEN = null;
+        this.TOKEN = null; this.FIELD = field;
+        this.METHOD = null;
     }
     
     public SnowflakeInitializer (Method method) {
-        this.TOKEN = null;
+        this.TOKEN = null; this.FIELD = null;
+        this.METHOD = method;
     }
-    
-    
     
     public List <Class <?>> getRequiredTokens (boolean deleteVarArgs) {
         List <Class <?>> result = new ArrayList <> ();
@@ -54,6 +57,8 @@ public final class SnowflakeInitializer {
                 return Stream.of (types);
             })
             . forEach (result::add);
+        } else if (METHOD != null) {
+            
         }
         
         return result;
@@ -101,6 +106,17 @@ public final class SnowflakeInitializer {
                 }
                 
                 return constructor.newInstance (args);
+            } else if (FIELD != null) {
+                if (!Modifier.isPublic (FIELD.getModifiers ())) { return null; }
+                if (!Modifier.isStatic (FIELD.getModifiers ())) { return null; }
+                if (!Modifier.isFinal  (FIELD.getModifiers ())) { return null; }
+                
+                @SuppressWarnings ("unchecked")
+                final R result = (R) FIELD.get (null);
+                
+                return result;
+            } else if (METHOD != null && inputMatches (args)) {
+                
             }
         } catch (Exception e) { e.printStackTrace (); }
         

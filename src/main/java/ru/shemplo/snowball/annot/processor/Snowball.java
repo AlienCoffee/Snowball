@@ -141,8 +141,8 @@ public abstract class Snowball {
         if (!Modifier.isStatic (field.getModifiers ())) { return; }
         if (!Modifier.isFinal  (field.getModifiers ())) { return; }
         
-        CONTEXT.registeredSnowflakes.put (field.getDeclaringClass (), 
-                                   new SnowflakeInitializer (field));
+        CONTEXT.registeredSnowflakes.put (field.getType (), 
+                         new SnowflakeInitializer (field));
     }
     
     private static void processMethod (Method method) {
