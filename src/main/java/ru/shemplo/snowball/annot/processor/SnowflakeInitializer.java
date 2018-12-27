@@ -7,25 +7,39 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public final class SnowflakeInitializer {
+public final class SnowflakeInitializer <T> {
     
-    private final Class <?> TOKEN;
+    private final Class <? extends T> TOKEN;
     private final Method METHOD;
     private final Field FIELD;
+    private final T INSTANCE;
     
-    public SnowflakeInitializer (Class <?> token) {
-        this.TOKEN = token; this.FIELD = null;
-        this.METHOD = null;
+    private final int PRIORITY;
+    
+    public SnowflakeInitializer (Class <? extends T> token, int priority) {
+        this (token, null, null, null, priority);
     }
     
-    public SnowflakeInitializer (Field field) {
-        this.TOKEN = null; this.FIELD = field;
-        this.METHOD = null;
+    public SnowflakeInitializer (Field field, int priority) {
+        this (null, field, null, null, priority);
     }
     
-    public SnowflakeInitializer (Method method) {
-        this.TOKEN = null; this.FIELD = null;
-        this.METHOD = method;
+    public SnowflakeInitializer (Method method, int priority) {
+        this (null, null, method, null, priority);
+    }
+    
+    public SnowflakeInitializer (T instance, int priority) {
+        this (null, null, null, instance, priority);
+    }
+    
+    private SnowflakeInitializer (Class <? extends T> token, Field field, 
+            Method method, T instance, int priority) {
+        this.TOKEN = token; this.FIELD = field; this.METHOD = method;
+        this.INSTANCE = instance; this.PRIORITY = priority;
+    }
+    
+    public int getPriority () {
+        return PRIORITY;
     }
     
     public List <Class <?>> getRequiredTokens (boolean deleteVarArgs) {
@@ -58,7 +72,13 @@ public final class SnowflakeInitializer {
             })
             . forEach (result::add);
         } else if (METHOD != null) {
-            
+            for (Class <?> type : METHOD.getParameterTypes ()) {
+                if (type.isPrimitive ()) {
+                    String message = String.format ("Snowflake method %s can't have "
+                                         + "primitive arguments", METHOD.getName ());
+                    throw new IllegalStateException (message);
+                }
+            }
         }
         
         return result;
@@ -84,7 +104,7 @@ public final class SnowflakeInitializer {
         return true;
     }
     
-    public <R> R init (Object ... args) {
+    public T init (Object ... args) {
         Objects.requireNonNull (args);
         
         try {
@@ -92,7 +112,7 @@ public final class SnowflakeInitializer {
                 Class <?> [] types = getRequiredTokens (false)
                                    . toArray (new Class [0]);
                 @SuppressWarnings ("unchecked")
-                Constructor <R> constructor = (Constructor <R>) TOKEN
+                Constructor <T> constructor = (Constructor <T>) TOKEN
                                             . getConstructor (types);
                 if (constructor.isVarArgs ()) {
                     Object [] tmp = new Object [args.length + 1];
@@ -107,20 +127,32 @@ public final class SnowflakeInitializer {
                 
                 return constructor.newInstance (args);
             } else if (FIELD != null) {
-                if (!Modifier.isPublic (FIELD.getModifiers ())) { return null; }
-                if (!Modifier.isStatic (FIELD.getModifiers ())) { return null; }
-                if (!Modifier.isFinal  (FIELD.getModifiers ())) { return null; }
-                
                 @SuppressWarnings ("unchecked")
-                final R result = (R) FIELD.get (null);
+                final T result = (T) FIELD.get (null);
                 
                 return result;
             } else if (METHOD != null && inputMatches (args)) {
+                Class <?> [] types = getRequiredTokens (false)
+                                   . toArray (new Class [0]);
+                if (METHOD.isVarArgs ()) {
+                    Object [] tmp = new Object [args.length + 1];
+                    if (args.length > 0) {
+                        System.arraycopy (args, 0, tmp, 0, tmp.length);
+                    }
+                    
+                    Class <?> stub = types [types.length - 1].getComponentType ();
+                    tmp [args.length] = Array.newInstance (stub, 0);
+                    args = tmp;
+                }
                 
+                @SuppressWarnings ("unchecked")
+                final T result = (T) METHOD.invoke (null, args);
+                
+                return result;
             }
         } catch (Exception e) { e.printStackTrace (); }
         
-        return null;
+        return INSTANCE;
     }
     
 }

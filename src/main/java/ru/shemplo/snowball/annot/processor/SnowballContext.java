@@ -1,5 +1,7 @@
 package ru.shemplo.snowball.annot.processor;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 
 public final class SnowballContext {
@@ -30,7 +32,28 @@ public final class SnowballContext {
         }
     }
     
-    public final Map <Class <?>, SnowflakeInitializer> registeredSnowflakes
-        = new HashMap <> ();
-     
+    public final Map <Class <?>, SnowflakeInitializer <?>> 
+        registeredSnowflakes = new HashMap <> ();
+    
+    void addInitializer (Class <?> token, int priority) {
+        registeredSnowflakes.compute (token, 
+            (k, v) -> (v == null || v.getPriority () < priority) 
+                    ? new SnowflakeInitializer <> (token, priority) 
+                    : v);
+    }
+    
+    void addInitializer (Field field, int priority) {
+        registeredSnowflakes.compute (field.getType (), 
+            (k, v) -> (v == null || v.getPriority () < priority) 
+                    ? new SnowflakeInitializer <> (field, priority) 
+                    : v);
+    }
+    
+    void addInitializer (Method method, int priority) {
+        registeredSnowflakes.compute (method.getReturnType (), 
+            (k, v) -> (v == null || v.getPriority () < priority) 
+                    ? new SnowflakeInitializer <> (method, priority) 
+                    : v);
+    }
+    
 }

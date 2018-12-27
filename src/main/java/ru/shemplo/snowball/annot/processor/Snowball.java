@@ -21,10 +21,14 @@ public abstract class Snowball {
     protected static final synchronized void shape (String ... args) {
         if (isSnowballShaped) { return; }
         
+        final long start = System.currentTimeMillis ();
+        
         Class <?> shapeClass = getCallingClass ();
         runWalkFrom (shapeClass.getPackage ());
+        CONTEXT.addInitializer (shapeClass, 0);
         
-        System.out.println ("Process is over");
+        final long end = System.currentTimeMillis ();
+        System.out.println (String.format ("Process is over (done by %dms)", end - start));
         isSnowballShaped = true;
     }
     
@@ -105,8 +109,9 @@ public abstract class Snowball {
         }
         
         if (token.isAnnotationPresent (Snowflake.class)) {
-            CONTEXT.registeredSnowflakes.put (token, 
-                  new SnowflakeInitializer (token));
+            Snowflake snowflake = token.getAnnotation (Snowflake.class);
+            final int priority = snowflake.priority ();
+            CONTEXT.addInitializer (token, priority);
         }
         
         Arrays.asList (token.getDeclaredFields ())
@@ -114,44 +119,29 @@ public abstract class Snowball {
         
         Arrays.asList (token.getDeclaredMethods ())
         . forEach (Snowball::processMethod);
-        
-        /*
-        
-        if (token.isAnnotationPresent (Snowflake.class)) {
-            long registered = Arrays.asList (token.getDeclaredFields ()).stream ()
-                            . filter (f -> !Modifier.isFinal (f.getModifiers ()))
-                            . filter (f -> f.isAnnotationPresent (Polar.class))
-                            . map    (Field::getType)
-                            . peek   (CONTEXT::addProjectClass)
-                            . count  ();
-            if (registered > 0) { CONTEXT.needInjection.add (token); }
-        }
-        
-        Arrays.asList (token.getDeclaredMethods ()).stream ()
-        . filter  (m -> !Modifier.isAbstract (m.getModifiers ()))
-        . filter  (m -> Modifier.isStatic (m.getModifiers ()))
-        . filter  (m -> Modifier.isPublic (m.getModifiers ()))
-        . filter  (m -> m.isAnnotationPresent (Cooler.class))
-        . forEach (CONTEXT.coolers::add);
-        */
     }
     
     private static void processField (final Field field) {
-        if (!Modifier.isPublic (field.getModifiers ())) { return; }
-        if (!Modifier.isStatic (field.getModifiers ())) { return; }
-        if (!Modifier.isFinal  (field.getModifiers ())) { return; }
+        if (!Modifier.isPublic (field.getModifiers ()))   { return; }
+        if (!Modifier.isStatic (field.getModifiers ()))   { return; }
+        if (!Modifier.isFinal  (field.getModifiers ()))   { return; }
+        if (!field.isAnnotationPresent (Snowflake.class)) { return; }
+        if (field.getType ().isPrimitive ())              { return; }
         
-        CONTEXT.registeredSnowflakes.put (field.getType (), 
-                         new SnowflakeInitializer (field));
+        Snowflake snowflake = field.getAnnotation (Snowflake.class);
+        final int priority = snowflake.priority ();
+        CONTEXT.addInitializer (field, priority);
     }
     
     private static void processMethod (Method method) {
-        if (!Modifier.isPublic (method.getModifiers ())) { return; }
-        if (!Modifier.isStatic (method.getModifiers ())) { return; }
-        if (!Modifier.isFinal  (method.getModifiers ())) { return; }
+        if (!Modifier.isPublic (method.getModifiers ()))   { return; }
+        if (!Modifier.isStatic (method.getModifiers ()))   { return; }
+        if (!method.isAnnotationPresent (Snowflake.class)) { return; }
+        if (method.getReturnType ().isPrimitive ())        { return; }
         
-        CONTEXT.registeredSnowflakes.put (method.getDeclaringClass (), 
-                                   new SnowflakeInitializer (method));
+        Snowflake snowflake = method.getAnnotation (Snowflake.class);
+        final int priority = snowflake.priority ();
+        CONTEXT.addInitializer (method, priority);
     }
     
     private static void processPackage (Package pkg) {
@@ -163,26 +153,6 @@ public abstract class Snowball {
             . forEach (CONTEXT::addProjectClass);
         } catch (IOException ioe) { 
             throw new RuntimeException (ioe);
-        }
-    }
-    
-    @SuppressWarnings ("unused")
-    private static final Snowball createMainInstance (String className) {
-        try {
-            ClassLoader cl = Thread.currentThread ().getContextClassLoader ();
-            Class <?> token = Class.forName (className, false, cl);
-            if (Snowball.class.isAssignableFrom (token)) {
-                @SuppressWarnings ("unchecked")
-                Class <? extends Snowball> snowballToken = (Class <? extends Snowball>) token;
-                return snowballToken.getConstructor ().newInstance ();
-            } else {
-                String message = String.format ("Type `%s` is not instacne of Snowball", token);
-                throw new RuntimeException (message);
-            }
-        } catch (RuntimeException re) {
-            throw re; // Just propagate
-        } catch (Exception e) {
-            throw new RuntimeException (e);
         }
     }
     
