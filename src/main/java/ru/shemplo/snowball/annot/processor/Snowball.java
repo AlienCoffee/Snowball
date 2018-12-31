@@ -28,7 +28,8 @@ public abstract class Snowball {
         CONTEXT.addInitializer (shapeClass, 0);
         
         final long end = System.currentTimeMillis ();
-        System.out.println (String.format ("Process is over (done by %dms)", end - start));
+        System.out.println (String.format ("Process is over (done by %dms)", 
+                                           end - start));
         isSnowballShaped = true;
     }
     
@@ -154,6 +155,10 @@ public abstract class Snowball {
         } catch (IOException ioe) { 
             throw new RuntimeException (ioe);
         }
+    }
+    
+    protected static void runBuildingHierarhy () {
+        
     }
     
     protected void onShaped (String ... args) throws Exception {}
