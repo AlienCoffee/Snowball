@@ -38,6 +38,14 @@ public final class SnowflakeInitializer <T> {
         this.INSTANCE = instance; this.PRIORITY = priority;
     }
     
+    @Override
+    public String toString () {
+        return super.toString ().concat (
+            String.format (" (t: %b, f: %b, m: %b, i: %b)", TOKEN != null, 
+                          FIELD != null, METHOD != null, INSTANCE != null)
+        );
+    }
+    
     public int getPriority () {
         return PRIORITY;
     }
