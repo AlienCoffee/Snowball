@@ -16,7 +16,8 @@ public class DBBinaryOperator implements DBUnit {
 		this.OPER = operator;
 	}
 	
-	public String toString () {
+	@Override
+    public String toString () {
 		StringBuilder sb = new StringBuilder ();
 		sb.append (LEFT).append (OPER).append (RIGHT);
 		if (label.length () > 0) {

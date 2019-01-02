@@ -32,7 +32,8 @@ public class DBColumnBuilder implements DBUnit {
 		this.name = name;
 	}
 	
-	public String toString () {
+	@Override
+    public String toString () {
 		DBValidator.testName (name, null);
 		
 		StringBuilder sb = new StringBuilder ();
@@ -81,7 +82,8 @@ public class DBColumnBuilder implements DBUnit {
 		return this;
 	}
 	
-	public DBColumnBuilder as (String label) {
+	@Override
+    public DBColumnBuilder as (String label) {
 		if (label == null || label.length () == 0) {
 			String text = "AS label can't have EMPTY value";
 			throw new IllegalArgumentException (text);
