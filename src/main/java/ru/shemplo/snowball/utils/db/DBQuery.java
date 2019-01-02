@@ -8,7 +8,8 @@ public class DBQuery {
 		this.QUERY = query;
 	}
 	
-	public String toString () {
+	@Override
+    public String toString () {
 		return QUERY;
 	}
 	

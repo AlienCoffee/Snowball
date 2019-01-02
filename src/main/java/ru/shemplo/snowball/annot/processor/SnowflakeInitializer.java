@@ -5,49 +5,82 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import ru.shemplo.snowball.annot.Snowflake;
+
 public final class SnowflakeInitializer <T> {
+    
+    private static final Predicate <AnnotatedElement> NEED_REFRESH
+          = m -> m.getAnnotation (Snowflake.class).refresh ();
     
     private final Class <? extends T> TOKEN;
     private final Method METHOD;
     private final Field FIELD;
-    private final T INSTANCE;
+    private T instance;
     
+    private final boolean REFRESH;
     private final int PRIORITY;
     
     public SnowflakeInitializer (Class <? extends T> token, int priority) {
-        this (token, null, null, null, priority);
+        this (token, null, null, null, priority, 
+              NEED_REFRESH.test (token));
     }
     
     public SnowflakeInitializer (Field field, int priority) {
-        this (null, field, null, null, priority);
+        this (null, field, null, null, priority, 
+              NEED_REFRESH.test (field));
     }
     
     public SnowflakeInitializer (Method method, int priority) {
-        this (null, null, method, null, priority);
+        this (null, null, method, null, priority, 
+              NEED_REFRESH.test (method));
     }
     
     public SnowflakeInitializer (T instance, int priority) {
-        this (null, null, null, instance, priority);
+        this (null, null, null, instance, priority, false);
     }
     
     private SnowflakeInitializer (Class <? extends T> token, Field field, 
-            Method method, T instance, int priority) {
+            Method method, T instance, int priority, boolean refresh) {
         this.TOKEN = token; this.FIELD = field; this.METHOD = method;
-        this.INSTANCE = instance; this.PRIORITY = priority;
+        this.instance = instance; this.PRIORITY = priority;
+        this.REFRESH = refresh;
     }
     
     @Override
     public String toString () {
         return super.toString ().concat (
             String.format (" (t: %b, f: %b, m: %b, i: %b)", TOKEN != null, 
-                          FIELD != null, METHOD != null, INSTANCE != null)
+                          FIELD != null, METHOD != null, instance != null)
         );
+    }
+    
+    public Class <?> getType () {
+        return TOKEN != null ? TOKEN
+                      : (METHOD != null ? METHOD.getReturnType ()
+                                 : (FIELD != null ? FIELD.getType ()
+                                           : (instance != null ? instance.getClass ()
+                                                        : null)));
     }
     
     public int getPriority () {
         return PRIORITY;
+    }
+    
+    public boolean isRefreshing () {
+        return REFRESH;
+    }
+    
+    private Object [] context;
+    
+    public void rememberContext (Object ... args) {
+        this.context = args;
+    }
+    
+    public T getInstance () {
+        return instance;
     }
     
     public List <Class <?>> getRequiredTokens (boolean deleteVarArgs) {
@@ -112,8 +145,43 @@ public final class SnowflakeInitializer <T> {
         return true;
     }
     
+    public T init () {
+        Objects.requireNonNull (context);
+        return this.init (context);
+    }
+    
+    public T init (SnowballContext context) {
+        final T result = this.init ();
+        initFields (context, result);
+        return result;
+    }
+    
+    public static void initFields (SnowballContext context, Object instance) {
+        Arrays.asList (instance.getClass ().getDeclaredFields ()).forEach (f -> {
+            try {
+                final Class <?> type = f.getType ();
+                f.setAccessible (true);
+                
+                if (Modifier.isStatic (f.getModifiers ())) { return; }
+                if (Modifier.isFinal (f.getModifiers ())) { return; }
+                if (type.isPrimitive ()) { return; }
+                
+                if (f.get (instance) != null) { return; } // already initialized
+                
+                f.set (instance, context.getSnowflakeFor (type));
+                if (context.registeredSnowflakes.get (type).isRefreshing ()) {
+                    initFields (context, f.get (instance));
+                }
+            } catch (Exception e) { e.printStackTrace (); }
+        });
+    }
+    
     public T init (Object ... args) {
         Objects.requireNonNull (args);
+        
+        if (instance != null && !REFRESH) { 
+            return instance; 
+        }
         
         try {
             if (TOKEN != null && inputMatches (args)) {
@@ -133,10 +201,11 @@ public final class SnowflakeInitializer <T> {
                     args = tmp;
                 }
                 
-                return constructor.newInstance (args);
+                return this.instance = constructor.newInstance (args);
             } else if (FIELD != null) {
                 @SuppressWarnings ("unchecked")
                 final T result = (T) FIELD.get (null);
+                this.instance = result;
                 
                 return result;
             } else if (METHOD != null && inputMatches (args)) {
@@ -155,12 +224,13 @@ public final class SnowflakeInitializer <T> {
                 
                 @SuppressWarnings ("unchecked")
                 final T result = (T) METHOD.invoke (null, args);
+                this.instance = result;
                 
                 return result;
             }
         } catch (Exception e) { e.printStackTrace (); }
         
-        return INSTANCE;
+        return instance;
     }
     
 }

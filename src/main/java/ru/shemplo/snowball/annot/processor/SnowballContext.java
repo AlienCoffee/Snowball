@@ -35,6 +35,13 @@ public final class SnowballContext {
     public final Map <Class <?>, SnowflakeInitializer <?>> 
         registeredSnowflakes = new HashMap <> ();
     
+    void addInitializer (Class <?> token, SnowflakeInitializer <?> initializer) {
+        final int priority = initializer.getPriority ();
+        registeredSnowflakes.compute (token, 
+            (k, v) -> (v == null || v.getPriority () < priority) 
+                    ? initializer : v);
+    }
+    
     void addInitializer (Class <?> token, int priority) {
         registeredSnowflakes.compute (token, 
             (k, v) -> (v == null || v.getPriority () < priority) 
@@ -54,6 +61,12 @@ public final class SnowballContext {
             (k, v) -> (v == null || v.getPriority () < priority) 
                     ? new SnowflakeInitializer <> (method, priority) 
                     : v);
+    }
+    
+    @SuppressWarnings ("unchecked")
+    public <R> R getSnowflakeFor (Class <?> type) {
+        if (!registeredSnowflakes.containsKey (type)) { return null; }
+        return (R) registeredSnowflakes.get (type).init ();
     }
     
 }

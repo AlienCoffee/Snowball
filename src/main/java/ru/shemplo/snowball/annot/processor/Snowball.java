@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import ru.shemplo.snowball.annot.Snowflake;
 import ru.shemplo.snowball.annot.Wind;
+import ru.shemplo.snowball.stuctures.Pair;
 import ru.shemplo.snowball.utils.ClasspathUtils;
 
 public abstract class Snowball {
@@ -26,11 +27,18 @@ public abstract class Snowball {
         Class <?> shapeClass = getCallingClass ();
         runWalkFrom (shapeClass.getPackage ());
         CONTEXT.addInitializer (shapeClass, 0);
+        runBuildingHierarhy ();
+        
+        runInitializationOfFields ();
         
         final long end = System.currentTimeMillis ();
         System.out.println (String.format ("Process is over (done by %dms)", 
                                            end - start));
         isSnowballShaped = true;
+        Snowball snowball = (Snowball) CONTEXT.registeredSnowflakes
+                          . get (Snowball.class)
+                          . getInstance ();
+        snowball.onShaped (args);
     }
     
     protected static final synchronized void shape (Snowball instance, String ... args) {
@@ -158,9 +166,91 @@ public abstract class Snowball {
     }
     
     protected static void runBuildingHierarhy () {
-        
+        new ArrayList <> (CONTEXT.registeredSnowflakes.keySet ())
+        . forEach (token -> {
+            final SnowflakeInitializer <?> initializer
+                = CONTEXT.registeredSnowflakes.get (token);
+            
+            Queue <Class <?>> queue = new LinkedList <> ();
+            queue.add (token);
+            
+            while (!queue.isEmpty ()) {
+                final Class <?> type = queue.poll ();
+                CONTEXT.addInitializer (type, initializer);
+                
+                final Class <?> superClass = type.getSuperclass ();
+                if (superClass != null) { queue.add (superClass); }
+                Arrays.asList (type.getInterfaces ()).forEach (queue::add);
+            }
+        });
     }
     
-    protected void onShaped (String ... args) throws Exception {}
+    protected static void runInitializationOfFields () {
+        Set <Class <?>> initializedSnowflakes = new HashSet <> ();
+        new ArrayList <> (CONTEXT.registeredSnowflakes.keySet ())
+        . forEach (token -> {
+            final SnowflakeInitializer <?> initializer
+                = CONTEXT.registeredSnowflakes.get (token);
+            
+            if (!initializedSnowflakes.contains (initializer.getType ())
+                    && initializer.getType () != null) {
+                initializedSnowflakes.add (initializer.getType ());
+            }
+        });
+        
+        List <Pair <? extends SnowflakeInitializer <?>, Integer>> 
+            initializers = initializedSnowflakes.stream ()
+                         . map     (CONTEXT.registeredSnowflakes::get)
+                         . map     (i -> Pair.mp (i, getDistanceFor (i)))
+                         . sorted  ((a, b) -> Integer.compare (a.S, b.S))
+                         . collect (Collectors.toList ());
+        initializers.forEach (pair -> {
+            final SnowflakeInitializer <?> initializer = pair.F;
+            List <?> arguments = initializer.getRequiredTokens ().stream ()
+                               . map     (CONTEXT.registeredSnowflakes::get)
+                               . filter  (i -> !i.isRefreshing ())
+                               . map     (SnowflakeInitializer::init) // context is remembered
+                               . collect (Collectors.toList ());
+            final Object [] args = arguments.toArray ();
+            initializer.rememberContext (args);
+            initializer.init ();
+        });
+        
+        initializers.forEach (pair -> SnowflakeInitializer.initFields (CONTEXT, pair.F.getInstance ()));
+    }
+    
+    private static final Map <SnowflakeInitializer <?>, Integer> 
+        DISTANCES = new HashMap <> ();
+    private static final Set <SnowflakeInitializer <?>>
+        CYCLE_BREAKER = new HashSet <> ();
+    
+    private static final int getDistanceFor (SnowflakeInitializer <?> initializer) {
+        if (DISTANCES.containsKey (initializer)) {
+            return DISTANCES.get (initializer);
+        }
+        
+        CYCLE_BREAKER.add (initializer);
+        
+        final List <Class <?>> required = initializer.getRequiredTokens (true);
+        if (required.isEmpty ()) { DISTANCES.put (initializer, 0); return 0; }
+        
+        int distance = required.stream ()
+                     . map      (CONTEXT.registeredSnowflakes::get)
+                     . peek     (i -> {
+                         if (CYCLE_BREAKER.contains (i)) {
+                             String message = String.format ("Cycle depencency detected in %s", 
+                                                             initializer.getType ());
+                             throw new IllegalStateException (message);
+                         }
+                     })
+                     . mapToInt (Snowball::getDistanceFor)
+                     . max ().orElse (0) + 1;
+        DISTANCES.put (initializer, distance);
+        return distance;
+    }
+    
+    public SnowballContext getContext () { return CONTEXT; }
+    
+    protected void onShaped (String ... args) {}
     
 }

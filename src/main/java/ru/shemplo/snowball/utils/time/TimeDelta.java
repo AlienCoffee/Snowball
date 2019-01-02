@@ -51,7 +51,8 @@ public class TimeDelta {
 		this.milliseconds = milliseconds;
 	}
 	
-	public String toString () {
+	@Override
+    public String toString () {
 		StringBuilder sb = new StringBuilder ("dt = ");
 		sb.append (milliseconds >= 0 ? "+" : "-");
 		
