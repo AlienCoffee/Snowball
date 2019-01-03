@@ -5,7 +5,7 @@
   <groupId>ru.shemplo</groupId>
   <artifactId>snowball</artifactId>
   <packaging>jar</packaging>
-  <version>0.0.4</version>
+  <version>1.0.0</version>
   
   <name>Snowball</name>
   <description>Simple DI framework</description>
