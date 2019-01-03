@@ -13,7 +13,8 @@ import ru.shemplo.snowball.annot.Snowflake;
 public final class SnowflakeInitializer <T> {
     
     private static final Predicate <AnnotatedElement> NEED_REFRESH
-          = m -> m.getAnnotation (Snowflake.class).refresh ();
+          = m -> !m.isAnnotationPresent (Snowflake.class) ? false
+               : m.getAnnotation (Snowflake.class).refresh ();
     
     private final Class <? extends T> TOKEN;
     private final Method METHOD;
