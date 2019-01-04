@@ -204,6 +204,7 @@ public abstract class Snowball {
                          . map     (i -> Pair.mp (i, getDistanceFor (i)))
                          . sorted  ((a, b) -> Integer.compare (a.S, b.S))
                          . collect (Collectors.toList ());
+        System.out.println (initializers);
         initializers.forEach (pair -> {
             final SnowflakeInitializer <?> initializer = pair.F;
             List <?> arguments = initializer.getRequiredTokens ().stream ()
@@ -221,30 +222,30 @@ public abstract class Snowball {
     
     private static final Map <SnowflakeInitializer <?>, Integer> 
         DISTANCES = new HashMap <> ();
-    private static final Set <SnowflakeInitializer <?>>
-        CYCLE_BREAKER = new HashSet <> ();
     
     private static final int getDistanceFor (SnowflakeInitializer <?> initializer) {
         if (DISTANCES.containsKey (initializer)) {
             return DISTANCES.get (initializer);
         }
         
-        CYCLE_BREAKER.add (initializer);
+        Set <SnowflakeInitializer <?>> cycleBreaker = new HashSet <> ();
+        cycleBreaker.add (initializer);
         
         final List <Class <?>> required = initializer.getRequiredTokens (true);
         if (required.isEmpty ()) { DISTANCES.put (initializer, 0); return 0; }
         
+        System.out.println (required);
         int distance = required.stream ()
                      . map      (CONTEXT.registeredSnowflakes::get)
                      . peek     (i -> {
-                         if (CYCLE_BREAKER.contains (i)) {
+                         if (cycleBreaker.contains (i)) {
                              String message = String.format ("Cycle depencency detected in %s", 
                                                              initializer.getType ());
                              throw new IllegalStateException (message);
                          }
                      })
                      . mapToInt (Snowball::getDistanceFor)
-                     . max ().orElse (0) + 1;
+                     . max      ().orElse (0) + 1;
         DISTANCES.put (initializer, distance);
         return distance;
     }
