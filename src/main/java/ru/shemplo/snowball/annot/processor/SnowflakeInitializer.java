@@ -52,10 +52,8 @@ public final class SnowflakeInitializer <T> {
     
     @Override
     public String toString () {
-        return super.toString ().concat (
-            String.format (" (t: %b, f: %b, m: %b, i: %b)", TOKEN != null, 
-                          FIELD != null, METHOD != null, instance != null)
-        );
+        return String.format ("SI of `%s` (t: %b, f: %b, m: %b, i: %b)", getType (), 
+                    TOKEN != null, FIELD != null, METHOD != null, instance != null);
     }
     
     public Class <?> getType () {
@@ -120,6 +118,8 @@ public final class SnowflakeInitializer <T> {
                                          + "primitive arguments", METHOD.getName ());
                     throw new IllegalStateException (message);
                 }
+                
+                result.add (type);
             }
         }
         
