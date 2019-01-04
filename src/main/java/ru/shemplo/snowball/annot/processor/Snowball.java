@@ -204,7 +204,6 @@ public abstract class Snowball {
                          . map     (i -> Pair.mp (i, getDistanceFor (i)))
                          . sorted  ((a, b) -> Integer.compare (a.S, b.S))
                          . collect (Collectors.toList ());
-        System.out.println (initializers);
         initializers.forEach (pair -> {
             final SnowflakeInitializer <?> initializer = pair.F;
             List <?> arguments = initializer.getRequiredTokens ().stream ()
@@ -234,7 +233,6 @@ public abstract class Snowball {
         final List <Class <?>> required = initializer.getRequiredTokens (true);
         if (required.isEmpty ()) { DISTANCES.put (initializer, 0); return 0; }
         
-        System.out.println (required);
         int distance = required.stream ()
                      . map      (CONTEXT.registeredSnowflakes::get)
                      . peek     (i -> {
