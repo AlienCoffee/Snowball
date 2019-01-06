@@ -31,6 +31,7 @@ public class ColorManip {
     
     private static final Random RANDOM = new Random ();
     
+    @SuppressWarnings ("restriction")
     public static final javafx.scene.paint.Color getRandomColor (int from, int to) {
         return javafx.scene.paint.Color.rgb (
                 from + RANDOM.nextInt (to - from), 
@@ -39,6 +40,7 @@ public class ColorManip {
              );
     }
     
+    @SuppressWarnings ("restriction")
     public static final javafx.scene.paint.Color getRandomColor () {
         return getRandomColor (0, 256);
     }

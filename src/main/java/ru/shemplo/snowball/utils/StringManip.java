@@ -2,12 +2,10 @@ package ru.shemplo.snowball.utils;
 
 import static ru.shemplo.snowball.utils.fun.StreamUtils.*;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class StringManip {
@@ -55,6 +53,30 @@ public class StringManip {
     
     public static int compare (String a, String b) {
         throw new UnsupportedOperationException ();
+    }
+    
+    public static String readAsString (InputStream is, Charset charset) {
+        Objects.requireNonNull (is);
+        
+        StringBuilder sb = new StringBuilder ();
+        try (
+            Reader r = new InputStreamReader (is, charset);
+            BufferedReader br = new BufferedReader (r);
+        ) {
+            String line = null;
+            while ((line = br.readLine ()) != null) {
+                sb.append (line).append ("\n");
+            }
+        } catch (IOException ioe) {
+            String message = "Failed to read input stream";
+            new IllegalArgumentException (message);
+        }
+        
+        return sb.toString ();
+    }
+    
+    public static String readAsString (InputStream is) {
+        return readAsString (is, StandardCharsets.UTF_8);
     }
     
 }
