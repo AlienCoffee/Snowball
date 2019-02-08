@@ -169,7 +169,14 @@ public final class SnowflakeInitializer <T> {
                 
                 if (f.get (instance) != null) { return; } // already initialized
                 
+                if (f.isAnnotationPresent (Snowflake.class)) {
+                    if (f.getAnnotation (Snowflake.class).manual ()) {
+                        return; // field will be initialized manually
+                    }
+                }
+                
                 f.set (instance, context.getSnowflakeFor (type));
+                System.out.println (type + " " + context.registeredSnowflakes.get (type));
                 if (context.registeredSnowflakes.get (type).isRefreshing ()) {
                     initFields (context, f.get (instance));
                 }

@@ -52,4 +52,14 @@ public @interface Snowflake {
      */
     boolean refresh () default false;
     
+    /**
+     * Assigns that marked field will be initialized manually.
+     * It can be used when you need to declare field that doesn't
+     * require dependency injection.
+     * 
+     * @return ignore this field or not
+     * 
+     */
+    boolean manual () default false;
+    
 }
