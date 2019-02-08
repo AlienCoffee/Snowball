@@ -29,6 +29,7 @@ public abstract class Snowball {
         CONTEXT.addInitializer (shapeClass, 0);
         runBuildingHierarhy ();
         
+        System.out.println ("Fields injection");
         runInitializationOfFields ();
         
         final long end = System.currentTimeMillis ();
@@ -248,7 +249,7 @@ public abstract class Snowball {
         return distance;
     }
     
-    public SnowballContext getContext () { return CONTEXT; }
+    public static SnowballContext getContext () { return CONTEXT; }
     
     protected void onShaped (String ... args) {}
     
