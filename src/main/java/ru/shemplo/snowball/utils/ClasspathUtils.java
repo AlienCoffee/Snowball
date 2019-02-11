@@ -1,10 +1,10 @@
 package ru.shemplo.snowball.utils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.annotation.Annotation;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
+
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -70,6 +70,14 @@ public class ClasspathUtils {
         return null;
     }
     
+    public static final List <JarEntry> getEntriesFromJAR (JarFile jarFile) {
+        return Stream.of (jarFile)
+             . map (JarFile::entries)
+             . flatMap (en -> StreamUtils.whilst (Enumeration::hasMoreElements, 
+                                                  Enumeration::nextElement, en))
+             . collect (Collectors.toList ());
+    }
+    
     private static final Stream <Class <?>> getClassesFromJAR (Package pkg) {
         final ClassLoader classLoader = Thread.currentThread  ()
                                       . getContextClassLoader ();
@@ -82,9 +90,8 @@ public class ClasspathUtils {
              . map     (ClasspathUtils::decodeUnchecked)
              . map     (ClasspathUtils::makeJarFileUnchecked)
              . filter  (Objects::nonNull)
-             . map     (JarFile::entries)
-             . flatMap (en -> StreamUtils.whilst (Enumeration::hasMoreElements, 
-                                                  Enumeration::nextElement, en))
+             . map     (ClasspathUtils::getEntriesFromJAR)
+             . flatMap (List::stream)
              . map     (JarEntry::getName)
              . filter  (n -> n.endsWith (".class"))
              . map     (n -> n.substring (0, n.length () - ".class".length ()))
@@ -198,6 +205,30 @@ public class ClasspathUtils {
         return getAllSupers (token).stream ()
              . filter (t -> t.isInterface ())
              . collect (Collectors.toList ());
+    }
+    
+    public static Optional <String> getMainClassFromJar (JarFile jar) {
+        JarEntry manifest = getEntriesFromJAR (jar).stream ()
+                          . filter (e -> e.getName ().endsWith ("MANIFEST.MF"))
+                          . findFirst ().orElse (null);
+        if (manifest == null) { return Optional.empty (); }
+        
+        try (
+            InputStream is = jar.getInputStream (manifest);
+            Reader r = new InputStreamReader (is, StandardCharsets.UTF_8);
+            BufferedReader br = new BufferedReader (r);
+        ) {
+            String line = null, need = "Main-Class:";
+            while ((line = br.readLine ()) != null) {
+                if (line.startsWith (need)) { break; }
+            }
+            
+            if (line == null) { return Optional.empty (); }
+            line = line.substring (need.length ()).trim ();
+            return Optional.of (line);
+        } catch (IOException ioe) {
+            return Optional.empty ();
+        }
     }
     
 }
