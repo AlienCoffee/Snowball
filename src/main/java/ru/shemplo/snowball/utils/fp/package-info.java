@@ -5,4 +5,4 @@
  * @author Shemplo
  *
  */
-package ru.shemplo.snowball.utils.db.bld;
+package ru.shemplo.snowball.utils.fp;

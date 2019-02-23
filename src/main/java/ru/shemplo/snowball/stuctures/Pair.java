@@ -1,12 +1,16 @@
 package ru.shemplo.snowball.stuctures;
 
+import java.io.Serializable;
+
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.function.Function;
 
 import ru.shemplo.snowball.utils.MurmurHash;
 
-public class Pair <F, S> {
+public class Pair <F, S> implements Serializable {
+    
+    private static final long serialVersionUID = -1422594531249230932L;
     
     public final F F;
     public final S S;
