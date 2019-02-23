@@ -18,8 +18,16 @@ public interface AStream <T, MT> extends Stream <T> {
      */
     public <R> AStream <R, MT> from (Stream <R> stream);
     
-    default <F extends Function <T, R>, R> AStream <R, MT> map2 (F f) {
-        return from (this.map (f));
+    /**
+     * 
+     * @param f
+     * 
+     * @return
+     * 
+     */
+    default <Temp, R> AStream <R, MT> pipe (Function <T, Temp> f1, 
+            Function <Temp, R> f2) {
+        return from (map (f1).map (f2));
     }
     
     /**
@@ -59,7 +67,7 @@ public interface AStream <T, MT> extends Stream <T> {
      * 
      */
     default <I1, I2, R> AStream <R, MT> map (TriFunction <T, I1, I2, R> f, I1 arg1, I2 arg2) {
-        return from (this.map (t -> f.apply (t, arg1, arg2)));
+        return from (map (t -> f.apply (t, arg1, arg2)));
     }
     
     /**
@@ -90,7 +98,7 @@ public interface AStream <T, MT> extends Stream <T> {
      */
     default <I1, I2, I3, R> AStream <R, MT> map (QuadFunction <T, I1, I2, I3, R> f, 
             final I1 arg1, final I2 arg2, final I3 arg3) {
-        return from (this.map (t -> f.apply (t, arg1, arg2, arg3)));
+        return from (map (t -> f.apply (t, arg1, arg2, arg3)));
     }
     
     /**
@@ -117,6 +125,35 @@ public interface AStream <T, MT> extends Stream <T> {
      * @return
      * 
      */
+    public Pair <Boolean, AStream <T, MT>> hasMemorized ();
+    
+    /**
+     * 
+     * @return
+     * 
+     */
     public AStream <MT, Void> recall ();
+    
+    /**
+     * 
+     * @param stream
+     * 
+     * @return
+     * 
+     */
+    default <S> Stream <Pair <T, S>> zip (Stream <S> stream) {
+        return StreamUtils.zip (this, stream, Pair::mp);
+    }
+    
+    /**
+     * 
+     * @param stream
+     * 
+     * @return
+     * 
+     */
+    default <S> Stream <Pair <S, T>> zipL (Stream <S> stream) {
+        return StreamUtils.zip (stream, this, Pair::mp);
+    }
     
 }

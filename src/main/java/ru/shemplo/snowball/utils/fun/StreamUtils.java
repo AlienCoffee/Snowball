@@ -42,7 +42,7 @@ public interface StreamUtils {
         throw new UnsupportedOperationException ();
     }
     
-    static <I1, I2, O> Stream <O> zip (Stream <I1> left, Stream <I2> right, 
+    static <I1, I2, O> AStream <O, ?> zip (Stream <I1> left, Stream <I2> right, 
             BiFunction <I1, I2, O> zipper) {
         Objects.requireNonNull (zipper);
         Spliterator <? extends I1> aSpliterator = Objects.requireNonNull (left ).spliterator ();
@@ -75,9 +75,9 @@ public interface StreamUtils {
         };
         
         Spliterator <O> split = Spliterators.spliterator (cIterator, zipSize, characteristics);
-        return (left.isParallel () || right.isParallel ()) 
-             ? StreamSupport.stream (split, true)
-             : StreamSupport.stream (split, false);
+        return AStreamProxy.make ((left.isParallel () || right.isParallel ()) 
+                                  ? StreamSupport.stream (split, true)
+                                  : StreamSupport.stream (split, false));
     }
     
 }

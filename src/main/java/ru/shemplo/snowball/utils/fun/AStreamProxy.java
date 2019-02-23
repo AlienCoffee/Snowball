@@ -277,13 +277,23 @@ public class AStreamProxy <T, MT> implements AStream <T, MT> {
     }
 
     @Override
+    @SuppressWarnings ("unchecked")
     public <R> AStream <R, MT> from (Stream <R> stream) {
+        if (stream instanceof AStream) {
+            return (AStream <R, MT>) stream;
+        }
+        
         return make (stream);
     }
     
     @Override
     public <R> AStream <R, T> memorize (Function <T, R> mapper) {
         return make (null, parent.map (Pair::dup).map (p -> p.applyF (mapper)));
+    }
+    
+    @Override
+    public Pair <Boolean, AStream <T, MT>> hasMemorized () {
+        return Pair.mp (parent == null, this);
     }
     
     @Override
