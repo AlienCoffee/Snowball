@@ -1,4 +1,4 @@
-package ru.shemplo.snowball.utils.fun;
+package ru.shemplo.snowball.utils.fp;
 
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -10,19 +10,21 @@ import ru.shemplo.snowball.stuctures.Pair;
 public interface AStream <T, MT> extends Stream <T> {
     
     /**
+     * Converts native Java {@link Stream} to custom {@link AStream}.
      * 
-     * @param stream
+     * @param stream which should be converted
      * 
-     * @return
+     * @return instance of {@link AStream}
      * 
      */
     public <R> AStream <R, MT> from (Stream <R> stream);
     
     /**
      * 
-     * @param f
+     * @param f1 first function that will be applied
+     * @param f2 second function that will be applied to intermediate result
      * 
-     * @return
+     * @return stream with consistently applied map functions
      * 
      */
     default <Temp, R> AStream <R, MT> pipe (Function <T, Temp> f1, 
@@ -32,10 +34,10 @@ public interface AStream <T, MT> extends Stream <T> {
     
     /**
      * 
-     * @param f
-     * @param arg
+     * @param f function that will be applied
+     * @param arg additional argument to function (second one)
      * 
-     * @return
+     * @return result of function application
      * 
      */
     default <I, R> AStream <R, MT> map (BiFunction <T, I, R> f, I arg) {
@@ -46,10 +48,10 @@ public interface AStream <T, MT> extends Stream <T> {
      * 
      * @author Shemplo
      *
-     * @param <T1>
-     * @param <T2>
-     * @param <T3>
-     * @param <R>
+     * @param <T1> type of the first argument
+     * @param <T2> type of the second argument
+     * @param <T3> type of the third argument
+     * @param <R> return type
      * 
      */
     @FunctionalInterface
@@ -59,9 +61,9 @@ public interface AStream <T, MT> extends Stream <T> {
     
     /**
      * 
-     * @param f
-     * @param arg1
-     * @param arg2
+     * @param f function that will be applied
+     * @param arg1 additional argument to function (second one)
+     * @param arg2 additional argument to function (third one)
      * 
      * @return
      * 
@@ -74,11 +76,11 @@ public interface AStream <T, MT> extends Stream <T> {
      * 
      * @author Shemplo
      *
-     * @param <T1>
-     * @param <T2>
-     * @param <T3>
-     * @param <T4>
-     * @param <R>
+     * @param <T1> type of the first argument
+     * @param <T2> type of the second argument
+     * @param <T3> type of the third argument
+     * @param <T4> type of the fourth argument
+     * @param <R> return type
      * 
      */
     @FunctionalInterface
@@ -88,10 +90,10 @@ public interface AStream <T, MT> extends Stream <T> {
     
     /**
      * 
-     * @param f
-     * @param arg1
-     * @param arg2
-     * @param arg3
+     * @param f function that will be applied
+     * @param arg1 additional argument to function (second one)
+     * @param arg2 additional argument to function (third one)
+     * @param arg3 additional argument to function (fourth one)
      * 
      * @return
      * 
@@ -103,7 +105,7 @@ public interface AStream <T, MT> extends Stream <T> {
     
     /**
      * 
-     * @param c
+     * @param c consumer for indexed stream entry
      * 
      */
     default void foreach (BiConsumer <Integer, T> c) {
@@ -113,32 +115,32 @@ public interface AStream <T, MT> extends Stream <T> {
     
     /**
      * 
-     * @param mapper
+     * @param mapper function to split stream on two instances
      * 
-     * @return
+     * @return {@link AStream} with memorized values
      * 
      */
     public <R> AStream <R, T> memorize (Function <T, R> mapper);
     
     /**
      * 
-     * @return
+     * @return {@link Pair} with information if it has memorized values
      * 
      */
     public Pair <Boolean, AStream <T, MT>> hasMemorized ();
     
     /**
      * 
-     * @return
+     * @return turn back to memorized values
      * 
      */
     public AStream <MT, Void> recall ();
     
     /**
      * 
-     * @param stream
+     * @param stream which will be attached from the right
      * 
-     * @return
+     * @return zipped streams
      * 
      */
     default <S> Stream <Pair <T, S>> zip (Stream <S> stream) {
@@ -147,9 +149,9 @@ public interface AStream <T, MT> extends Stream <T> {
     
     /**
      * 
-     * @param stream
+     * @param stream stream which will be attached from the left
      * 
-     * @return
+     * @return zipped streams
      * 
      */
     default <S> Stream <Pair <S, T>> zipL (Stream <S> stream) {

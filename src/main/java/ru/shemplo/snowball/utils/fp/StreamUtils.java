@@ -1,4 +1,4 @@
-package ru.shemplo.snowball.utils.fun;
+package ru.shemplo.snowball.utils.fp;
 
 import static java.util.Spliterator.*;
 

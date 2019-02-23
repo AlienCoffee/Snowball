@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import ru.shemplo.snowball.stuctures.Pair;
-import ru.shemplo.snowball.utils.fun.StreamUtils;
+import ru.shemplo.snowball.utils.fp.StreamUtils;
 
 public class ClasspathUtils {
     
