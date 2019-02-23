@@ -43,7 +43,7 @@ public abstract class Snowball {
     }
     
     protected static final synchronized void shape (Snowball instance, String ... args) {
-        
+        throw new UnsupportedOperationException ();
     }
     
     protected static void runWalkFrom (Package pkg) {

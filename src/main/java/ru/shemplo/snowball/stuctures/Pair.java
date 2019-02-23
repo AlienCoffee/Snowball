@@ -70,6 +70,10 @@ public class Pair <F, S> {
         return new Pair <> (F, S);
     }
     
+    public static <T> Pair <T, T> dup (T T) {
+        return mp (T, T);
+    }
+    
     public static <F, S> Pair <F, S> fromMapEntry (Entry <F, S> entry) {
         return mp (entry.getKey (), entry.getValue ());
     }
