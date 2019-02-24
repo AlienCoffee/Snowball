@@ -18,6 +18,25 @@ public class FunctionalUtils {
             return new Case <> (predicate, function);
         }
         
+        public static <T, S, R> Case <T, R> caseOf (Predicate <T> predicate, 
+                Function <T, S> mapper, Function <S, R> function) {
+            return new Case <> (predicate, function.compose (mapper));
+        }
+        
+    };
+    
+    public static class Default <T, R> extends Case <T, R> {
+
+        private static final long serialVersionUID = 4826711998655536127L;
+
+        public Default (Function <T, R> S) {
+            super (__ -> true, S);
+        }
+        
+        public static <T, R> Case <T, R> defaultCase (Function <T, R> function) {
+            return new Default <> (function);
+        }
+        
     };
     
     @SafeVarargs
