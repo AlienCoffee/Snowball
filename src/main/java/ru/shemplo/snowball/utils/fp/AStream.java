@@ -20,6 +20,18 @@ public interface AStream <T, MT> extends Stream <T> {
     public <R> AStream <R, MT> from (Stream <R> stream);
     
     /**
+     * Converts native Java {@link Stream} to custom {@link AStream}.
+     * 
+     * @param stream which should be converted
+     * 
+     * @return instance of {@link AStream}
+     * 
+     */
+    static <T, MT> AStream <T, MT> make (Stream <T> stream) {
+        return AStreamProxy.make (stream);
+    }
+    
+    /**
      * 
      * @param f1 first function that will be applied
      * @param f2 second function that will be applied to intermediate result
