@@ -126,20 +126,20 @@ public class AStreamProxy <T, MT> implements AStream <T, MT> {
 
     @Override
     public void forEach (Consumer <? super T> action) {
-        if (parent != null) parent.forEach (action);
-        mparent.forEach (p -> action.accept (p.getF ()));
+        if   (parent != null) { parent.forEach (action); } 
+        else mparent.forEach (p -> action.accept (p.getF ()));
     }
 
     @Override
     public void forEachOrdered (Consumer <? super T> action) {
-        if (parent != null) parent.forEachOrdered (action);
-        mparent.forEachOrdered (p -> action.accept (p.getF ()));
+        if   (parent != null) parent.forEachOrdered (action);
+        else mparent.forEachOrdered (p -> action.accept (p.getF ()));
     }
 
     @Override
     public Object [] toArray () {
-        if (parent != null) return parent.toArray ();
-        return mparent.map (Pair::getF).toArray ();
+        if   (parent != null) return parent.toArray ();
+        else return mparent.map (Pair::getF).toArray ();
     }
 
     @Override
@@ -272,8 +272,8 @@ public class AStreamProxy <T, MT> implements AStream <T, MT> {
 
     @Override
     public void close () {
-        if (parent != null) parent.close ();
-        mparent.close ();
+        if   (parent != null) parent.close ();
+        else mparent.close ();
     }
 
     @Override
