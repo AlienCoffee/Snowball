@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import ru.shemplo.snowball.annot.PostShaped;
 import ru.shemplo.snowball.annot.Snowflake;
 
 public final class SnowflakeInitializer <T> {
@@ -176,11 +177,21 @@ public final class SnowflakeInitializer <T> {
                 }
                 
                 f.set (instance, context.getSnowflakeFor (type));
-                System.out.println (type + " " + context.registeredSnowflakes.get (type));
                 if (context.registeredSnowflakes.get (type).isRefreshing ()) {
                     initFields (context, f.get (instance));
                 }
             } catch (Exception e) { e.printStackTrace (); }
+        });
+        
+        Arrays.asList (instance.getClass ().getDeclaredMethods ()).stream ()
+        . filter (method -> method.isAnnotationPresent (PostShaped.class))
+        . findFirst ().ifPresent (method -> {
+            method.setAccessible (true);
+            try   { method.invoke (instance, new Object [] {}); } 
+            catch (IllegalAccessException | IllegalArgumentException 
+                | InvocationTargetException e) {
+                e.printStackTrace ();
+            }
         });
     }
     
