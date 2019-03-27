@@ -1,10 +1,8 @@
 package ru.shemplo.snowball.annot.processor;
 
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -159,7 +157,15 @@ public final class SnowflakeInitializer <T> {
     }
     
     public static void initFields (SnowballContext context, Object instance) {
-        Arrays.asList (instance.getClass ().getDeclaredFields ()).forEach (f -> {
+        List <Field> fields = new ArrayList <> ();
+        
+        Class <?> tmpToken = instance.getClass ();
+        while (!Object.class.equals (tmpToken)) {
+            fields.addAll (Arrays.asList (tmpToken.getDeclaredFields ()));
+            tmpToken = tmpToken.getSuperclass ();
+        }
+        
+        fields.forEach (f -> {
             try {
                 final Class <?> type = f.getType ();
                 f.setAccessible (true);
@@ -177,9 +183,11 @@ public final class SnowflakeInitializer <T> {
                 }
                 
                 f.set (instance, context.getSnowflakeFor (type));
-                if (context.registeredSnowflakes.get (type).isRefreshing ()) {
-                    initFields (context, f.get (instance));
-                }
+                Optional.ofNullable (context.registeredSnowflakes.get (type)).ifPresent (sf -> {
+                    if (!sf.isRefreshing ()) { return; } // update not required
+                    try   { initFields (context, f.get (instance)); } 
+                    catch (Exception e) {}
+                });
             } catch (Exception e) { e.printStackTrace (); }
         });
         
