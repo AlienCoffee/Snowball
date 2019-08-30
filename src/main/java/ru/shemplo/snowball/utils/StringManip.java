@@ -79,4 +79,24 @@ public class StringManip {
         return readAsString (is, StandardCharsets.UTF_8);
     }
     
+    public static String substringBeforeFirst (String string, String delimiter) {
+        int index = string.indexOf (delimiter);
+        return index != -1 ? string.substring (0, index) : string;
+    }
+    
+    public static String substringBeforeLast (String string, String delimiter) {
+        int index = string.lastIndexOf (delimiter);
+        return index != -1 ? string.substring (0, index) : string;
+    }
+    
+    public static String substringAfterFirst (String string, String delimiter) {
+        int index = string.lastIndexOf (delimiter);
+        return index != -1 ? string.substring (index + delimiter.length ()) : string;
+    }
+    
+    public static String substringAfterLast (String string, String delimiter) {
+        int index = string.lastIndexOf (delimiter);
+        return index != -1 ? string.substring (index + delimiter.length ()) : string;
+    }
+    
 }
