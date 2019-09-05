@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 
 import ru.shemplo.snowball.annot.PostShaped;
 import ru.shemplo.snowball.annot.Snowflake;
+import ru.shemplo.snowball.utils.MiscUtils;
 
 public final class SnowflakeInitializer <T> {
     
@@ -230,8 +231,7 @@ public final class SnowflakeInitializer <T> {
                 
                 return this.instance = constructor.newInstance (args);
             } else if (FIELD != null) {
-                @SuppressWarnings ("unchecked")
-                final T result = (T) FIELD.get (null);
+                final T result = MiscUtils.cast (FIELD.get (null));
                 this.instance = result;
                 
                 return result;

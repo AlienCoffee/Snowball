@@ -25,6 +25,8 @@ public abstract class Snowball {
         final long start = System.currentTimeMillis ();
         
         Class <?> shapeClass = getCallingClass ();
+        
+        CONTEXT.setBoundPackage (shapeClass.getPackage ());
         runWalkFrom (shapeClass.getPackage ());
         CONTEXT.addInitializer (shapeClass, 0);
         runBuildingHierarhy ();
@@ -55,16 +57,17 @@ public abstract class Snowball {
             while (!CONTEXT.unexploredClasses.isEmpty ()) {                
                 Class <?> token = CONTEXT.unexploredClasses.poll ();
                 CONTEXT.addProjectPackage (token.getPackage ());
-                System.out.println (String.format ("%10s %s", "class", 
-                                    token.getName ()));
+                //System.out.println (String.format ("%10s %s", "class", 
+                //                    token.getName ()));
                 processClass (token);
                 someTasksDone = true;
             }
             
             while (!CONTEXT.unexploredPackages.isEmpty ()) {
-                System.out.println (String.format ("%10s %s", "package", 
-                        CONTEXT.unexploredPackages.peek ().getName ()));
-                processPackage (CONTEXT.unexploredPackages.poll ());
+                final Package pkgQueue = CONTEXT.unexploredPackages.poll ();
+                //System.out.println (String.format ("%10s %s", "package", 
+                //    pkgQueue.getName ()));
+                processPackage (pkgQueue);
                 someTasksDone = true;
             }
             
@@ -108,11 +111,17 @@ public abstract class Snowball {
             . forEach (CONTEXT::addProjectPackage);
         }
         
-        Class <?> container = token.getDeclaringClass ();
+        Class <?> container = null;
+        try {
+            container = token.getDeclaringClass ();
+        } catch (SecurityException | IllegalAccessError se) {
+            return;
+        }
+        
         if (token.isMemberClass () 
                 && (!CONTEXT.registeredClasses.contains (container) 
                     || !Modifier.isStatic (token.getModifiers ()))) {
-            System.out.println (String.format ("%10s %s", "", "unregistered"));
+            //System.out.println (String.format ("%10s %s", "", "unregistered"));
             CONTEXT.registeredClasses.remove (token);
             CONTEXT.unexploredClasses.remove (token);
             return;
@@ -124,7 +133,7 @@ public abstract class Snowball {
             CONTEXT.addInitializer (token, priority);
         }
         
-        Arrays.asList (token.getDeclaredFields ())
+        Arrays.asList (token.getDeclaredFields ()).stream ()
         . forEach (Snowball::processField);
         
         Arrays.asList (token.getDeclaredMethods ())
@@ -132,11 +141,16 @@ public abstract class Snowball {
     }
     
     private static void processField (final Field field) {
+        Class <?> fieldType = field.getType ();
+        CONTEXT.addProjectPackage (fieldType.getPackage ());
+        CONTEXT.addProjectClass (fieldType);
+        
         if (!Modifier.isPublic (field.getModifiers ()))   { return; }
         if (!Modifier.isStatic (field.getModifiers ()))   { return; }
         if (!Modifier.isFinal  (field.getModifiers ()))   { return; }
         if (!field.isAnnotationPresent (Snowflake.class)) { return; }
         if (field.getType ().isPrimitive ())              { return; }
+        field.setAccessible (true);
         
         Snowflake snowflake = field.getAnnotation (Snowflake.class);
         final int priority = snowflake.priority ();
@@ -144,6 +158,10 @@ public abstract class Snowball {
     }
     
     private static void processMethod (Method method) {
+        final Class <?> returnType = method.getReturnType ();
+        CONTEXT.addProjectPackage (returnType.getPackage ());
+        CONTEXT.addProjectClass (returnType);
+        
         if (!Modifier.isPublic (method.getModifiers ()))   { return; }
         if (!Modifier.isStatic (method.getModifiers ()))   { return; }
         if (!method.isAnnotationPresent (Snowflake.class)) { return; }

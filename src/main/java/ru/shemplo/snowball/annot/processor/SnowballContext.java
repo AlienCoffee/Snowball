@@ -13,22 +13,38 @@ public final class SnowballContext {
     final Set <Class <?>> registeredClasses
         = new HashSet<> ();
     
+    private String boundPackage = null;
+    
+    public void setBoundPackage (Package pkg) {
+        boundPackage = pkg.getName ();
+    }
+    
     void addProjectClass (Class <?> token) {
-        if (!registeredClasses.contains (token)) {            
+        if (!registeredClasses.contains (token)) {
             registeredClasses.add (token);
-            unexploredClasses.add (token);
+            
+            if ((boundPackage != null && token.getName ().startsWith (boundPackage)) 
+                    || boundPackage == null) {
+                unexploredClasses.add (token);
+            }
         }
     }
     
     final Queue <Package> unexploredPackages
         = new LinkedList <> ();
-    final Set <Package> registeredPackages
+    final Set <String> registeredPackages
         = new HashSet <> ();
     
     void addProjectPackage (Package pkg) {
-        if (!registeredPackages.contains (pkg)) {
-            registeredPackages.add (pkg);
-            unexploredPackages.add (pkg);
+        if (pkg == null) { return; }
+        
+        if (!registeredPackages.contains (pkg.getName ())) {
+            registeredPackages.add (pkg.getName ());
+            
+            if ((boundPackage != null && pkg.getName ().startsWith (boundPackage)) 
+                    || boundPackage == null) {
+                unexploredPackages.add (pkg);
+            }
         }
     }
     
@@ -43,6 +59,9 @@ public final class SnowballContext {
     }
     
     void addInitializer (Class <?> token, int priority) {
+        addProjectPackage (token.getPackage ());
+        addProjectClass (token);
+        
         registeredSnowflakes.compute (token, 
             (k, v) -> (v == null || v.getPriority () < priority) 
                     ? new SnowflakeInitializer <> (token, priority) 
@@ -50,7 +69,8 @@ public final class SnowballContext {
     }
     
     void addInitializer (Field field, int priority) {
-        registeredSnowflakes.compute (field.getType (), 
+        final Class <?> fieldType = field.getType ();
+        registeredSnowflakes.compute (fieldType, 
             (k, v) -> (v == null || v.getPriority () < priority) 
                     ? new SnowflakeInitializer <> (field, priority) 
                     : v);

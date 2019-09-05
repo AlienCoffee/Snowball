@@ -3,6 +3,7 @@ package ru.shemplo.snowball.utils;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.annotation.Annotation;
 import java.net.*;
 import java.util.*;
 import java.util.jar.JarEntry;
@@ -35,9 +36,12 @@ public class ClasspathManager {
     private void loadClasses (List <String> includePrefixes) throws IOException {
         final ClassLoader    classLoader    = Thread.currentThread  ().getContextClassLoader ();
         final URLClassLoader urlClassLoader = new URLClassLoader (getJarURLs (), classLoader);
-        Arrays.asList (loadFromProject (classLoader, includePrefixes), 
-                       loadFromJARs (urlClassLoader, includePrefixes)).stream ()
-              .flatMap (List::stream).distinct ().forEach (classes::add);
+        Arrays.asList  (loadFromProject (classLoader, includePrefixes), 
+                        loadFromJARs (urlClassLoader, includePrefixes)).stream ()
+              .flatMap (List::stream).filter (Objects::nonNull).distinct ()
+              .forEach (classes::add);
+        classes.sort (Comparator.comparing (Class::getName));
+        //System.out.println (String.format ("%d classes loaded", classes.size ()));
     }
     
     private List <Class <?>> loadFromProject (ClassLoader cl, List <String> includePrefixes) throws IOException {
@@ -50,38 +54,46 @@ public class ClasspathManager {
         List <Class <?>> classes = new ArrayList <> ();
         rootFiles.forEach (file -> {
             Algorithms.runBFS (file, f -> {
+                String packageName = f.getAbsolutePath ().replace (file.getAbsolutePath (), "");
+                packageName = StringManip.substringBeforeLast (packageName, File.separator);
+                if (packageName.length () > 1) {
+                    packageName = packageName.substring (1).replace (File.separator, ".");
+                }
+                
                 if (!f.isDirectory () && f.isFile ()) {
                     final String fileName = f.getName ();
                     if (!fileName.endsWith (".class")) {
                         return false; // non-java file
                     }
                     
-                    if (fileName.endsWith ("package-info") || fileName.endsWith ("module-info")) {
-                        return false; // java but non-class file
-                    }
                     
                     String className = fileName.substring (
                         0, fileName.length () - ".class".length ()
                     );
                     
-                    String packageName = f.getAbsolutePath ().replace (file.getAbsolutePath (), "");
-                    packageName = StringManip.substringBeforeLast (packageName, File.separator);
-                    if (packageName.length () > 1) {
-                        packageName = packageName.substring (1).replace (File.separator, ".");
-                    }
-                    
                     className = new StringBuilder (packageName)
                               . append (".").append (className)
                               . toString ();
 
+                    if (className.endsWith ("package-info") 
+                        || className.endsWith ("module-info")) {
+                        return false; // java but non-class file
+                    }
+                    
                     try {
                         classes.add (Class.forName (className, false, cl));
                     } catch (ClassNotFoundException | NoClassDefFoundError cnfe) {
                         return false;
                     }
+                } else if (f.isDirectory () && includePrefixes.size () > 0) {
+                    for (String prefix : includePrefixes) {
+                        if (packageName.startsWith (prefix) || prefix.startsWith (packageName)) {
+                            return true;
+                        }
+                    }
                 }
                 
-                return f.isDirectory ();
+                return false;
             }, f -> Arrays.asList (f.listFiles ()));
         });
         
@@ -105,6 +117,15 @@ public class ClasspathManager {
              . filter  (p -> p.F > -1)
              . map     (p -> Pair.mp (p.S.substring (0, p.F), p.S.substring (p.F + 1)))
              . map     (p -> String.format ("%s.%s", p.F, p.S))
+             . filter  (n -> {
+                 for (String prefix : includePrefixes) {
+                     if (n.startsWith (prefix)) {
+                         return true;
+                     }
+                 }
+                 
+                 return false;
+             })
              . map     (n -> getClassForNameUnchecked (n, cl))
              . collect (Collectors.toList ());
     }
@@ -160,7 +181,42 @@ public class ClasspathManager {
     }
     
     public void destroy () {
+        if (!isDestroyed ()) {
+            classes.clear (); // to free space
+            destroyed = true;
+        }
+    }
+    
+    public Map <Class <? extends Annotation>, List <Object>> findObjectsWithAnnotation (
+        Set <Class <? extends Annotation>> interesting
+    ) {
+        Map <Class <? extends Annotation>, List <Object>> entries = new HashMap <> ();
+        interesting.forEach (i -> entries.put (i, new ArrayList <> ()));
         
+        classes.forEach (_class -> {
+            Algorithms.<Class <?>> runBFS (_class, c -> {
+                // Class
+                Arrays.stream (c.getDeclaredAnnotations ()).map (Annotation::annotationType)
+                      .filter (interesting::contains).map (entries::get)
+                      .forEach (lst -> lst.add (c));
+                // Fields
+                Arrays.stream (c.getDeclaredFields ()).forEach (f -> {
+                    Arrays.stream (f.getDeclaredAnnotations ()).map (Annotation::annotationType)
+                          .filter (interesting::contains).map (entries::get)
+                          .forEach (lst -> lst.add (f));
+                });
+                // Methods
+                Arrays.stream (c.getDeclaredMethods ()).forEach (m -> {
+                    Arrays.stream (m.getDeclaredAnnotations ()).map (Annotation::annotationType)
+                          .filter (interesting::contains).map (entries::get)
+                          .forEach (lst -> lst.add (m));
+                });
+                
+                return true;
+            }, c -> Arrays.asList (c.getDeclaredClasses ()));
+        });
+        
+        return entries;
     }
     
 }
